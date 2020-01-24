@@ -1,0 +1,17 @@
+<resources>
+
+    <dimen name="padding_default">8dp</dimen>
+
+
+    <dimen name="margin_thin">6dp</dimen>
+
+    <!-- Text size -->
+    <dimen name="text_size_big">32sp</dimen>
+    <dimen name="text_size_half">22sp</dimen>
+    <dimen name="text_size_small">12sp</dimen>
+    <dimen name="text_scale_size">15sp</dimen>
+
+    <!--  Dialog Status -->
+    <dimen name="status_progress_width">150dp</dimen>
+    <dimen name="status_progress_height">6dp</dimen>
+</resources>
