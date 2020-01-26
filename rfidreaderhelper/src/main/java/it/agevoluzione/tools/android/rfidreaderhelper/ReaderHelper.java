@@ -4,7 +4,6 @@ package it.agevoluzione.tools.android.rfidreaderhelper;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbManager;
 
 import androidx.annotation.Nullable;
 
@@ -15,11 +14,19 @@ import com.thingmagic.Reader;
 import com.thingmagic.ReaderException;
 import com.thingmagic.TagReadData;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import it.agevoluzione.tools.android.usbconnectorhelper.UsbConnectionMonitor;
 import it.agevoluzione.tools.android.usbconnectorhelper.UsbUtils;
-import it.agevoluzione.tools.android.utils.AndroidUtils;
 
-public class ReaderHelper implements IReaderHelper {
+public final class ReaderHelper implements IReaderHelper {
 
 //    public final static int NOT_INITIALIZED = 0;
 //    public final static byte INITIALIZED = 1;
@@ -41,7 +48,6 @@ public class ReaderHelper implements IReaderHelper {
 //    public final static int READING = INITIALIZED << 6;
 //    public final static int DEVICE_READING,
 
-    private int currentStatus;
 
     public final static int NOT_INITIALIZED = 0;
     public final static int INITIALIZED = 1;
@@ -71,12 +77,16 @@ public class ReaderHelper implements IReaderHelper {
         void onRead(TagReadData tagReadData);
     }
 
+    private volatile int currentStatus;
     private Reader reader;
     private UsbDevice usbDevice;
-    private AndroidUsbReflection androidUsbReflection;
+    private boolean androidUsbReflectionSetted;
     private UsbConnectionMonitor usbConnectionMonitor;
 
-    //    Listeners
+    private ExecutorService executorService;
+    private Future future;
+
+//    Listeners
 //      My Listeners
     private ReadExceptionListener myErrorListener;
     private ReadListener myReaderListener;
@@ -96,27 +106,82 @@ public class ReaderHelper implements IReaderHelper {
             configureUsbConnectionMonitor(context);
         }
     }
+    public void connect(Context context) throws Exception {
+        connect(context, new ReaderConfiguratorImpl());
+    }
 
     @Override
     public void connect(Context context, ReaderConfigurator configurator) throws Exception {
+//        synchronized (this) {
+//
+//            canOperateWithExeption(DEVICE_AUTHORIZATION_GRANT);
+//            androidUsbReflection = ReaderUtils.setupUsbManagerWithFtdi(context, usbDevice);
+//            reader = ReaderUtils.connect(usbDevice);
+//            tryUpdateStatus(READER_CONNECTED);
+//
+//            canOperateWithExeption(READER_CONFIGURED);
+//            configurator.configure(reader);
+//            tryUpdateStatus(DEVIDE_READY);
+//
+//        }
         synchronized (this) {
-//            if (!canOperate(READER_CONNECTED)) {
-//                int status = getStatus();
-//                if (status == DEVICE_ATTACHED_NOT_AUTHORIZED || status == DEVICE_AUTHORIZATION_GRANT) {
-//                   usbConnectionMonitor.scanUsbDevices(context);
-//                }
-//            } else {
             canOperateWithExeption(DEVICE_AUTHORIZATION_GRANT);
-            androidUsbReflection = ReaderUtils.setupUsbManagerWithFtdi(context, usbDevice);
-            reader = ReaderUtils.connect(usbDevice);
-            tryUpdateStatus(READER_CONNECTED);
-
-            canOperateWithExeption(READER_CONFIGURED);
-            configurator.configure(reader);
-            tryUpdateStatus(DEVIDE_READY);
-//            }
+            if (null == executorService) {
+                executorService = Executors.newFixedThreadPool(2);
+            }
+            if (null == future || future.isDone()) {
+                future = executorService.submit(new BgReaderConfigureTask(this)
+                        .setContext(context)
+                        .setConfigurator(configurator)
+                        .setTimeout(3000L));
+            }
         }
+
     }
+
+//    private class BgOperationConnect implements Callable<Reader> {
+//        Context context;
+//
+//        public BgOperationConnect(Context context) {
+//            this.context = context;
+//        }
+//
+//        @Override
+//        public Reader call() throws Exception {
+//            return createReader(context);
+//        }
+//
+//    }
+//
+//    private class BgOperationConfig implements Callable<Reader> {
+//        Future<Reader> connectFuture;
+//        ReaderConfigurator configurator;
+//        long timeout;
+//
+//        public BgOperationConfig(Future<Reader> connectFuture, ReaderConfigurator configurator, long timeout) {
+//            this.connectFuture = connectFuture;
+//            this.configurator = configurator;
+//            this.timeout = timeout;
+//        }
+//
+//        @Override
+//        public Reader call() throws Exception {
+//            try {
+//                try {
+//                    Reader reader = connectFuture.get(timeout, TimeUnit.MILLISECONDS);
+//                    configureConnectedReader(reader, configurator);
+//                    return reader;
+//                } catch (TimeoutException e) {
+//                    connectFuture.cancel(true);
+//                    updatetErrorListener(new Exception("Rfid reader may not be attached"));
+//                    tryUpdateStatus(DEVICE_AUTHORIZATION_GRANT);
+//                }
+//            } catch (Exception e) {
+//                updatetErrorListener(e);
+//            }
+//            return null;
+//        }
+//    }
 
     @Override
     public void startReading() throws Exception {
@@ -144,9 +209,9 @@ public class ReaderHelper implements IReaderHelper {
         }
         synchronized (this) {
 
-            if (null != androidUsbReflection) {
+            if (androidUsbReflectionSetted) {
                 AndroidUsbReflection.close();
-                androidUsbReflection = null;
+                androidUsbReflectionSetted = false;
             }
 
             if (null != reader) {
@@ -154,6 +219,14 @@ public class ReaderHelper implements IReaderHelper {
                 reader.removeReadListener(myReaderListener);
                 ReaderUtils.close(reader);
                 reader = null;
+            }
+
+            if (null != future) {
+                future.cancel(true);
+            }
+
+            if(null != executorService) {
+                executorService.shutdownNow();
             }
 
             if (null != usbDevice) {
@@ -186,9 +259,30 @@ public class ReaderHelper implements IReaderHelper {
 
 //            usbManager = null;
 
+            executorService = null;
+            future = null;
+
             setStatus(NOT_INITIALIZED);
         }
     }
+
+//    private Reader connectedReader(Context context) throws Exception {
+//        canOperateWithExeption(DEVICE_AUTHORIZATION_GRANT);
+//        if (!androidUsbReflectionSetted) {
+//            ReaderUtils.setupUsbManagerWithFtdi(context, usbDevice);
+//            androidUsbReflectionSetted = true;
+//        }
+//        Reader reader = ReaderUtils.connect(usbDevice);
+//        tryUpdateStatus(READER_CONNECTED);
+//        return reader;
+//    }
+//
+//    private void configureConnectedReader(Reader reader, ReaderConfigurator configurator) throws Exception {
+//        canOperateWithExeption(READER_CONFIGURED);
+//        configurator.configure(reader);
+//        tryUpdateStatus(DEVIDE_READY);
+//    }
+
 
     public boolean isReading() {
         return getStatus() == READING;
@@ -204,6 +298,10 @@ public class ReaderHelper implements IReaderHelper {
 
     public void setReaderListener(ReaderListener readerListener) {
         this.readerListener = readerListener;
+    }
+
+    public void setExecutorService(ExecutorService executorService) {
+        this.executorService = executorService;
     }
 
     private void configureUsbConnectionMonitor(Context context) {
@@ -243,12 +341,9 @@ public class ReaderHelper implements IReaderHelper {
         usbConnectionMonitor.scanUsbDevices(context);
     }
 
-
-
     private Exception generateErrorForChangeStatusNotPermitted(int newStatusRequest) {
         return new Exception("Change Status Not permitted!\nTry to change status from:" + getStatusName(getStatus()) + " to:" + getStatusName(newStatusRequest));
     }
-
 
     public String getStatusName() {
         return getStatusName(getStatus());
@@ -362,5 +457,87 @@ public class ReaderHelper implements IReaderHelper {
                 updatetErrorListener(e);
             }
         };
+    }
+
+    private static class BgReaderConfigureTask implements Runnable {
+        private ReaderHelper bind;
+        private Context context;
+        private ReaderConfigurator configurator;
+        private long timeout;
+
+        public BgReaderConfigureTask(ReaderHelper bind) {
+            this.bind = bind;
+        }
+
+        public BgReaderConfigureTask setTimeout(long timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public BgReaderConfigureTask setContext(Context context) {
+            this.context = context;
+            return this;
+        }
+
+        public BgReaderConfigureTask setConfigurator(ReaderConfigurator configurator) {
+            this.configurator = configurator;
+            return this;
+        }
+
+        @Override
+        public void run() {
+            if (null != context && null != configurator) {
+                Future<Reader> future = bind.executorService.submit(new Callable<Reader>() {
+                    @Override
+                    public Reader call() throws Exception {
+                        return connectedReader(bind, context);
+                    }
+                });
+
+                try {
+                    Reader reader = future.get(timeout, TimeUnit.MILLISECONDS);
+                    configureConnectedReader(reader, configurator);
+                    bind.reader = reader;
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    bind.executorService.shutdownNow();
+                    // Preserve interrupt status
+                    Thread.currentThread().interrupt();
+                } catch (TimeoutException e) {
+                    bind.updatetErrorListener(new Exception("Rfid reader may not be attached"));
+                } catch (Exception e) {
+                    bind.updatetErrorListener(e);
+                }
+                future.cancel(true);
+
+            } else {
+                bind.updatetErrorListener(new Exception("Null reported: Context="+context+ " Configurator="+configurator));
+            }
+            bind = null;
+            context = null;
+            configurator = null;
+        }
+
+        private Reader connectedReader(ReaderHelper bind, Context context) throws Exception {
+            synchronized (ReaderHelper.class) {
+                bind.canOperateWithExeption(DEVICE_AUTHORIZATION_GRANT);
+                if (!bind.androidUsbReflectionSetted) {
+                    ReaderUtils.setupUsbManagerWithFtdi(context, bind.usbDevice);
+                    bind.androidUsbReflectionSetted = true;
+                }
+                Reader reader = ReaderUtils.connect(bind.usbDevice);
+                bind.tryUpdateStatus(READER_CONNECTED);
+                return reader;
+            }
+        }
+
+        private void configureConnectedReader(Reader reader, ReaderConfigurator configurator) throws Exception {
+            synchronized (ReaderHelper.class) {
+                bind.canOperateWithExeption(READER_CONFIGURED);
+                configurator.configure(reader);
+                bind.tryUpdateStatus(DEVIDE_READY);
+            }
+        }
     }
 }

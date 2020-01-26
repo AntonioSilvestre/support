@@ -103,20 +103,19 @@ public class ReaderUtils {
         }
     }
 
-    @Nullable
+    @NonNull
     public static AndroidUsbReflection setupUsbManagerWithFtdi(@NonNull Context context, @NonNull UsbDevice usbDevice) throws Exception {
         UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
-        if (null != usbManager) {
-            int deviceClass = usbDevice.getDeviceClass();
-            if (deviceClass == 0) {
-                FT_Device ftDev = getFTDI(context, usbDevice);
-                return new AndroidUsbReflection(usbManager, ftDev, usbDevice, deviceClass);
-            }
+        int deviceClass = usbDevice.getDeviceClass();
+        if (deviceClass == 0) {
+            FT_Device ftDev = getFTDI(context, usbDevice);
+            return new AndroidUsbReflection(usbManager, ftDev, usbDevice, deviceClass);
+        } else {
+            throw new Exception("No valid AndroidUsbReflection device for "+usbDevice);
         }
-        return null;
     }
 
-    @Nullable
+    @NonNull
     public static FT_Device getFTDI(Context context, UsbDevice usbDevice) throws Exception {
         Context appContext = context.getApplicationContext();
         UsbUtils.requestPermissionForUsbDevice(context, usbDevice);
@@ -129,9 +128,10 @@ public class ReaderUtils {
             if (ftD2xx.isFtDevice(usbDevice)) {
                 ftD2xx.addUsbDevice(usbDevice);
                 return ftD2xx.openByUsbDevice(context, usbDevice);
+            } else {
+                throw new Exception("No valid FT_Device device for "+usbDevice);
             }
         }
 
-        return null;
     }
 }

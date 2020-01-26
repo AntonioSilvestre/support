@@ -24,15 +24,17 @@ public class MainActivity extends AppCompatActivity {
     Button button2;
     TextView testo;
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        readerHelper.init(this);
-    }
+
 
     @Override
     protected void onStop() {
         super.onStop();
+        readerHelper.disconnect(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
         readerHelper.close(this);
     }
 
@@ -43,13 +45,12 @@ public class MainActivity extends AppCompatActivity {
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+
 //        Bind View
         button1 = findViewById(R.id.connection_button_1);
         button2 = findViewById(R.id.connection_button_2);
 
         testo = findViewById(R.id.testo);
-
-
 
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
@@ -161,13 +162,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         readerHelper.init(this);
-
-
-
-
-
-
-
 
 
 
