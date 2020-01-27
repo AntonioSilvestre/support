@@ -57,9 +57,11 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
             }
         } else if (UsbUtils.isReqToActionPermission(intent)) {
             synchronized (this) {
-                UsbDevice device = getUsbDeviceFromIntent(intent);
-                boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
-                updateGrantedListener(device, granted);
+                if (null != usbDevice) {
+                    UsbDevice device = getUsbDeviceFromIntent(intent);
+                    boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
+                    updateGrantedListener(device, granted);
+                }
             }
         } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
             synchronized (this) {
@@ -85,14 +87,14 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
 
 
     private void updateConnectedListener(UsbDevice usbDevice) {
-        this.usbDevice = usbDevice;
+        setUsbDevice(usbDevice);
         if (null != listner) {
             listner.connect(usbDevice);
         }
     }
 
     private void updateGrantedListener(UsbDevice usbDevice, boolean grant) {
-        this.usbDevice = usbDevice;
+        setUsbDevice(usbDevice);
         if (null != listner) {
             listner.granted(usbDevice, grant);
         }
@@ -102,7 +104,13 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
         if (null != listner) {
             listner.disconnect(usbDevice);
         }
-        this.usbDevice = usbDevice;
+        setUsbDevice(null);
+    }
+
+    private void setUsbDevice(UsbDevice usbDevice) {
+        synchronized (this) {
+            this.usbDevice = usbDevice;
+        }
     }
 
     @Nullable

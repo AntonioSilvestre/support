@@ -87,7 +87,24 @@ public class UsbUtils {
     @Nullable
     public static UsbDevice scanUsbDevices(@NonNull Context context, @NonNull UsbDeviceFilter filter) {
         UsbManager usbManager = AndroidUtils.usbManager(context);
-        return scanUsbDevices(usbManager,filter);
+        if (null != usbManager) {
+            return scanUsbDevices(usbManager, filter);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static boolean verifyUsbDevice(@NonNull Context context, @NonNull UsbDevice usbDevice) {
+        UsbManager usbManager = AndroidUtils.usbManager(context);
+        if (null != usbManager) {
+            return verifyUsbDevice(usbManager, usbDevice);
+        }
+        throw new NullPointerException("usbManager");
+    }
+
+    @Nullable
+    public static boolean verifyUsbDevice(@NonNull UsbManager usbManager, @NonNull UsbDevice usbDevice) {
+        return null != usbManager.openDevice(usbDevice);
     }
 
     @Nullable

@@ -107,6 +107,8 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case ReaderHelper.INITIALIZED:
                         button1.setEnabled(false);
+                        button1.setText("No Device!");
+                        button2.setVisibility(View.INVISIBLE);
                         break;
                     case ReaderHelper.DEVICE_ATTACHED_NOT_AUTHORIZED:
                         button1.setText("Request");
