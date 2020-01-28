@@ -15,7 +15,6 @@ import com.thingmagic.ReadExceptionListener;
 import com.thingmagic.ReadListener;
 import com.thingmagic.Reader;
 import com.thingmagic.ReaderException;
-import com.thingmagic.SerialReader;
 import com.thingmagic.TagReadData;
 
 import java.util.concurrent.Callable;
@@ -28,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 
 import it.agevoluzione.tools.android.usbconnectorhelper.UsbConnectionMonitor;
 import it.agevoluzione.tools.android.usbconnectorhelper.UsbUtils;
+import it.agevoluzione.tools.android.utils.Locker;
 
 public final class ReaderHelper implements IReaderHelper {
 
@@ -124,29 +124,78 @@ public final class ReaderHelper implements IReaderHelper {
             asyncTaskConfig.execute(context);
         }
     }
-
+    ExecutorService executorService;
+    Future future;
+    Reading reading;
     @Override
     public synchronized void startReading() throws Exception {
+//        synchronized (this) {
+//            canOperateWithExeption(READING);
+//            reader.startReading();
+//            tryUpdateStatus(READING);
+//        }
         synchronized (this) {
             canOperateWithExeption(READING);
-            reader.startReading();
-            tryUpdateStatus(READING);
+            if (null == future || future.isDone()) {
+                executorService = Executors.newSingleThreadExecutor();
+                reading = new Reading(this);
+                future = executorService.submit(reading);
+            }
         }
+    }
+
+    private static class Reading implements Runnable {
+        private Locker<Boolean> locker;
+        private ReaderHelper bind;
+
+        private Reading(ReaderHelper reader) {
+            this.bind = reader;
+            locker = new Locker<>();
+        }
+
+        @Override
+        public void run() {
+            locker.setPayload(true);
+            bind.reader.startReading();
+            try {
+                bind.tryUpdateStatus(READING);
+                while (locker.getPayload()) {
+                    locker.lock(150L);
+                }
+                bind.reader.stopReading();
+                bind.tryUpdateStatus(READER_CONFIGURED);
+            } catch (Exception e) {
+                bind.updatetErrorListener(e);
+            } finally {
+                bind = null;
+                locker = null;
+            }
+        }
+
+        public void stop() {
+            locker.setPayload(false);
+            locker.unlockAll();
+        }
+
+
     }
 
     @Override
     public synchronized void stopReading() {
         synchronized (this) {
             if (isReading()) {
-                try {
-                    if (((SerialReader)reader).stopReading()) {
-                        tryUpdateStatus(READER_CONFIGURED);
-                    } else {
-                        updatetErrorListener(new Exception("Reader Not Stopped!"));
-                    }
-                } catch (Exception e) {
-                    updatetErrorListener(e);
-                }
+                reading.stop();
+
+//                try {
+//                    if (((SerialReader)reader).stopReading()) {
+//                        tryUpdateStatus(READER_CONFIGURED);
+//                    } else {
+//                        updatetErrorListener(new Exception("Reader Not Stopped!"));
+//                    }
+//                } catch (Exception e) {
+//                    updatetErrorListener(e);
+//                }
+
             }
         }
     }
@@ -166,7 +215,8 @@ public final class ReaderHelper implements IReaderHelper {
             if (null != reader) {
                 reader.removeReadExceptionListener(myErrorListener);
                 reader.removeReadListener(myReaderListener);
-                ReaderUtils.close(reader);
+//                ReaderUtils.close(reader);
+                reader.destroy();
                 reader = null;
             }
 
@@ -186,6 +236,17 @@ public final class ReaderHelper implements IReaderHelper {
     public synchronized void close(Context context) {
         disconnect(context);
         synchronized (this) {
+
+//todo verificare se mettere qui o in stop reading
+            if (null != future) {
+                future.cancel(true);
+                future = null;
+            }
+            if (null != executorService) {
+                executorService.shutdownNow();
+                executorService = null;
+            }
+            reading = null;
 
             if (null != usbConnectionMonitor) {
                 context.unregisterReceiver(usbConnectionMonitor);
@@ -280,6 +341,7 @@ public final class ReaderHelper implements IReaderHelper {
 
             @Override
             public void disconnect(UsbDevice device) {
+                setUsbDevice(null);
                 ReaderHelper.this.disconnect(context);
                 setStatus(INITIALIZED);
             }

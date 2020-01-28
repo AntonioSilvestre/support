@@ -44,7 +44,8 @@ public class UsbUtils {
 
     public static void closeUsbConnection(@NonNull UsbManager usbManager, @NonNull UsbDevice device) {
         if (null != device && null != usbManager) {
-            if (usbManager.hasPermission(device)) {
+//            if (usbManager.hasPermission(device)) {
+            try {
                 UsbDeviceConnection connection = usbManager.openDevice(device);
                 if (null != connection) {
                     int size = device.getInterfaceCount();
@@ -54,7 +55,8 @@ public class UsbUtils {
                         connection.close();
                     }
                 }
-            }
+            } catch (Exception ignored) {}
+//            }
         }
     }
 
