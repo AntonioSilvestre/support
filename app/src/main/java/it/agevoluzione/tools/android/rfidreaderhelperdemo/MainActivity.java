@@ -104,51 +104,59 @@ public class MainActivity extends AppCompatActivity {
 
                         switch (status) {
                             case ReaderHelper.NOT_INITIALIZED:
+                                testo.setText("");
                                 button1.setText("Non Inizialized!");
                                 button1.setEnabled(false);
                                 button2.setVisibility(View.INVISIBLE);
                                 break;
                             case ReaderHelper.INITIALIZED:
+                                testo.setText("");
                                 button1.setEnabled(false);
                                 button1.setText("No Device!");
                                 button2.setVisibility(View.INVISIBLE);
                                 break;
                             case ReaderHelper.USB_DEVICE_ATTACHED_NOT_AUTHORIZED:
+                                testo.setText("");
                                 button1.setText("Request");
                                 button1.setTag("Request");
                                 button1.setEnabled(true);
                                 button2.setVisibility(View.INVISIBLE);
                                 break;
                             case ReaderHelper.USB_DEVICE_AUTHORIZATION_GRANT:
+                                testo.setText("");
                                 button1.setText("Connect");
                                 button1.setTag("Connect");
                                 button1.setEnabled(true);
                                 button2.setVisibility(View.INVISIBLE);
                                 break;
                             case ReaderHelper.READER_CONNECTING:
+                                testo.setText("");
                                 button1.setText("Connecting...");
                                 button1.setEnabled(false);
                                 button2.setVisibility(View.INVISIBLE);
                                 break;
                             case ReaderHelper.READER_CONNECTED:
+                                testo.setText("");
                                 button1.setText("Configuring...");
                                 button1.setEnabled(false);
                                 button2.setVisibility(View.INVISIBLE);
                                 break;
                             case ReaderHelper.READER_CONFIGURED:
+                                testo.setText("");
                                 button1.setText("Read");
                                 button1.setTag("Read");
                                 button1.setEnabled(true);
                                 button2.setVisibility(View.INVISIBLE);
                                 break;
                             case ReaderHelper.READING:
+                                testo.setText("Reading...");
                                 button1.setText("Stop");
-                                button1.setTag("Stop");
                                 button1.setEnabled(true);
+                                button1.setTag("Stop");
                                 button2.setEnabled(true);
                                 button2.setVisibility(View.VISIBLE);
                                 button2.setText("Disconnect");
-                                button1.setTag("Disconnect");
+                                button2.setTag("Disconnect");
                                 break;
                         }
                     }
