@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        readerHelper.disconnect(this);
+        readerHelper.stopReading();
     }
 
     @Override
@@ -192,9 +192,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         readerHelper.init(this);
-
-
-
 
 //        FloatingActionButton fab = findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
