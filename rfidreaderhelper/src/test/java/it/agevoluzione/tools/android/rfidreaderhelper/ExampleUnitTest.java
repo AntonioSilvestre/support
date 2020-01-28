@@ -18,17 +18,17 @@ public class ExampleUnitTest {
     @Test
     public void testStat() {
         System.out.println("INITIALIZED= " + ReaderHelper.INITIALIZED);
-        System.out.println("DEVICE_ATTACHED_NOT_AUTHORIZED= " + ReaderHelper.DEVICE_ATTACHED_NOT_AUTHORIZED);
-        System.out.println("DEVICE_AUTHORIZATION_GRANT= " + ReaderHelper.DEVICE_AUTHORIZATION_GRANT);
+        System.out.println("USB_DEVICE_ATTACHED_NOT_AUTHORIZED= " + ReaderHelper.USB_DEVICE_ATTACHED_NOT_AUTHORIZED);
+        System.out.println("USB_DEVICE_AUTHORIZATION_GRANT= " + ReaderHelper.USB_DEVICE_AUTHORIZATION_GRANT);
+        System.out.println("READER_CONNECTING= " + ReaderHelper.READER_CONNECTING);
         System.out.println("READER_CONNECTED= " + ReaderHelper.READER_CONNECTED);
         System.out.println("READER_CONFIGURED= " + ReaderHelper.READER_CONFIGURED);
-        System.out.println("DEVIDE_READY= " + ReaderHelper.DEVIDE_READY);
         System.out.println("tot= " + (ReaderHelper.INITIALIZED |
-                ReaderHelper.DEVICE_ATTACHED_NOT_AUTHORIZED |
-                ReaderHelper.DEVICE_AUTHORIZATION_GRANT |
+                ReaderHelper.USB_DEVICE_ATTACHED_NOT_AUTHORIZED |
+                ReaderHelper.USB_DEVICE_AUTHORIZATION_GRANT |
+                ReaderHelper.READER_CONNECTING |
                 ReaderHelper.READER_CONNECTED |
-                ReaderHelper.READER_CONFIGURED |
-                ReaderHelper.DEVIDE_READY)
+                ReaderHelper.READER_CONFIGURED)
         );
     }
 
@@ -53,11 +53,11 @@ public class ExampleUnitTest {
     @Test
     public void testStat2() {
         System.out.println("INITIALIZED= " + INITIALIZED);
-        System.out.println("DEVICE_ATTACHED_NOT_AUTHORIZED= " + DEVICE_ATTACHED);
-        System.out.println("DEVICE_AUTHORIZATION_GRANT= " + DEVICE_AUTHORIZATION_GRANT);
-        System.out.println("READER_CONNECTED= " + READER_CONNECTED);
-        System.out.println("READER_CONFIGURED= " + READER_CONFIGURED);
-        System.out.println("DEVIDE_READY= " + DEVIDE_READY);
+        System.out.println("USB_DEVICE_ATTACHED_NOT_AUTHORIZED= " + DEVICE_ATTACHED);
+        System.out.println("USB_DEVICE_AUTHORIZATION_GRANT= " + DEVICE_AUTHORIZATION_GRANT);
+        System.out.println("READER_CONNECTING= " + READER_CONNECTED);
+        System.out.println("READER_CONNECTED= " + READER_CONFIGURED);
+        System.out.println("READER_CONFIGURED= " + DEVIDE_READY);
         System.out.println("tot= " + (INITIALIZED |
                 DEVICE_ATTACHED |
                 DEVICE_AUTHORIZATION_GRANT |
@@ -82,7 +82,7 @@ public class ExampleUnitTest {
 
         status = status | DEVICE_AUTHORIZATION_GRANT;
 
-        System.out.println("Add DEVICE_AUTHORIZATION_GRANT=" + status);
+        System.out.println("Add USB_DEVICE_AUTHORIZATION_GRANT=" + status);
 
         status = 0;
         canOperate(status, INITIALIZED);
@@ -117,7 +117,7 @@ public class ExampleUnitTest {
 
         status = status | DEVICE_AUTHORIZATION_GRANT;
 
-        System.out.println("Add DEVICE_AUTHORIZATION_GRANT=" + status);
+        System.out.println("Add USB_DEVICE_AUTHORIZATION_GRANT=" + status);
 
         status = INITIALIZED;
         canOperate(status, DEVICE_ATTACHED);
@@ -146,7 +146,7 @@ public class ExampleUnitTest {
 
         status = status | DEVICE_AUTHORIZATION_GRANT;
 
-        System.out.println("Add DEVICE_AUTHORIZATION_GRANT=" + status);
+        System.out.println("Add USB_DEVICE_AUTHORIZATION_GRANT=" + status);
 
         status = 0;
 

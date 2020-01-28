@@ -1,6 +1,7 @@
 package it.agevoluzione.tools.android.rfidreaderhelperdemo;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,8 +24,6 @@ public class MainActivity extends AppCompatActivity {
     Button button1;
     Button button2;
     TextView testo;
-
-
 
     @Override
     protected void onStop() {
@@ -95,59 +94,80 @@ public class MainActivity extends AppCompatActivity {
         readerHelper = new ReaderHelper();
         readerHelper.setStatusListener(new ReaderHelper.StatusListener() {
             @Override
-            public void onStatusChange(int status) {
+            public void onStatusChange(final int status) {
                 Snackbar.make(toolbar, readerHelper.getStatusName(status),Snackbar.LENGTH_LONG).show();
                 button1.setTag(null);
                 button2.setTag(null);
-                switch (status) {
-                    case ReaderHelper.NOT_INITIALIZED:
-                        button1.setText("Non Inizialized!");
-                        button1.setEnabled(false);
-                        button2.setVisibility(View.INVISIBLE);
-                        break;
-                    case ReaderHelper.INITIALIZED:
-                        button1.setEnabled(false);
-                        button1.setText("No Device!");
-                        button2.setVisibility(View.INVISIBLE);
-                        break;
-                    case ReaderHelper.DEVICE_ATTACHED_NOT_AUTHORIZED:
-                        button1.setText("Request");
-                        button1.setTag("Request");
-                        button1.setEnabled(true);
-                        button2.setVisibility(View.INVISIBLE);
-                        break;
-                    case ReaderHelper.DEVICE_AUTHORIZATION_GRANT:
-                        button1.setText("Connect");
-                        button1.setTag("Connect");
-                        button1.setEnabled(true);
-                        button2.setVisibility(View.INVISIBLE);
-                        break;
-                    case ReaderHelper.READER_CONNECTED:
-                    case ReaderHelper.READER_CONFIGURED:
-                    case ReaderHelper.DEVIDE_READY:
-                        button1.setText("Read");
-                        button1.setTag("Read");
-                        button1.setEnabled(true);
-                        button2.setVisibility(View.INVISIBLE);
-                        break;
-                    case ReaderHelper.READING:
-                        button1.setText("Stop");
-                        button1.setTag("Stop");
-                        button1.setEnabled(true);
-                        button2.setEnabled(true);
-                        button2.setVisibility(View.VISIBLE);
-                        button2.setText("Disconnect");
-                        button1.setTag("Disconnect");
-                        break;
-                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        switch (status) {
+                            case ReaderHelper.NOT_INITIALIZED:
+                                button1.setText("Non Inizialized!");
+                                button1.setEnabled(false);
+                                button2.setVisibility(View.INVISIBLE);
+                                break;
+                            case ReaderHelper.INITIALIZED:
+                                button1.setEnabled(false);
+                                button1.setText("No Device!");
+                                button2.setVisibility(View.INVISIBLE);
+                                break;
+                            case ReaderHelper.USB_DEVICE_ATTACHED_NOT_AUTHORIZED:
+                                button1.setText("Request");
+                                button1.setTag("Request");
+                                button1.setEnabled(true);
+                                button2.setVisibility(View.INVISIBLE);
+                                break;
+                            case ReaderHelper.USB_DEVICE_AUTHORIZATION_GRANT:
+                                button1.setText("Connect");
+                                button1.setTag("Connect");
+                                button1.setEnabled(true);
+                                button2.setVisibility(View.INVISIBLE);
+                                break;
+                            case ReaderHelper.READER_CONNECTING:
+                                button1.setText("Connecting...");
+                                button1.setEnabled(false);
+                                button2.setVisibility(View.INVISIBLE);
+                                break;
+                            case ReaderHelper.READER_CONNECTED:
+                                button1.setText("Configuring...");
+                                button1.setEnabled(false);
+                                button2.setVisibility(View.INVISIBLE);
+                                break;
+                            case ReaderHelper.READER_CONFIGURED:
+                                button1.setText("Read");
+                                button1.setTag("Read");
+                                button1.setEnabled(true);
+                                button2.setVisibility(View.INVISIBLE);
+                                break;
+                            case ReaderHelper.READING:
+                                button1.setText("Stop");
+                                button1.setTag("Stop");
+                                button1.setEnabled(true);
+                                button2.setEnabled(true);
+                                button2.setVisibility(View.VISIBLE);
+                                button2.setText("Disconnect");
+                                button1.setTag("Disconnect");
+                                break;
+                        }
+                    }
+
+                });
 
             }
         });
 
         readerHelper.setErrorListener(new ReaderHelper.ErrorListener() {
             @Override
-            public void onError(Throwable throwable) {
-                Toast.makeText(MainActivity.this,"ERR: "+throwable.getMessage(),Toast.LENGTH_LONG).show();
+            public void onError(final Throwable throwable) {
+                Log.e("MainActivity", "ERR", throwable);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,"ERR: "+throwable.getMessage(),Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         });
 

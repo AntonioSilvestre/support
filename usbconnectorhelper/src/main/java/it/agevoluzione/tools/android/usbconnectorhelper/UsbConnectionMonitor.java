@@ -22,19 +22,20 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
         void disconnect(UsbDevice device);
     }
 
-    private OnUsbConnectioListener listner;
+//    private boolean attached;
+    private OnUsbConnectioListener listener;
     private UsbDevice usbDevice;
     private UsbUtils.UsbDeviceFilter filter;
 
     public UsbConnectionMonitor() {}
 
-    public UsbConnectionMonitor(UsbUtils.UsbDeviceFilter filter, OnUsbConnectioListener listner) {
-        this.listner = listner;
+    public UsbConnectionMonitor(UsbUtils.UsbDeviceFilter filter, OnUsbConnectioListener listener) {
+        this.listener = listener;
         this.filter = filter;
     }
 
-    public UsbConnectionMonitor setListner(OnUsbConnectioListener listner) {
-        this.listner = listner;
+    public UsbConnectionMonitor setListener(OnUsbConnectioListener listener) {
+        this.listener = listener;
         return this;
     }
 
@@ -46,9 +47,11 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action) || ACTION_USB_DEVICE_ATTACHED_CHECK.equals(action)) {
+        UsbDevice device = getUsbDeviceFromIntent(intent);
+
+        if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
             synchronized (this) {
-                UsbDevice device = getUsbDeviceFromIntent(intent);
+//                attached = true;
                 if (null != device && !UsbUtils.requestPermissionForUsbDevice(context, device)){
                     updateGrantedListener(device, true);
                 } else {
@@ -58,13 +61,21 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
         } else if (UsbUtils.isReqToActionPermission(intent)) {
             synchronized (this) {
                 if (null != usbDevice) {
-                    UsbDevice device = getUsbDeviceFromIntent(intent);
                     boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
                     updateGrantedListener(device, granted);
                 }
             }
+        } else if (ACTION_USB_DEVICE_ATTACHED_CHECK.equals(action)) {
+            synchronized (this) {
+                if (null != device && !UsbUtils.requestPermissionForUsbDevice(context, device)) {
+                    updateGrantedListener(device, true);
+                } else {
+                    updateConnectedListener(device);
+                }
+            }
         } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
             synchronized (this) {
+//                attached = false;
                 if (usbDevice != null) {
                     // call your method that cleans up and closes communication with the device
                     UsbUtils.closeUsbConnection(context, usbDevice);
@@ -77,32 +88,33 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
 
     public void scanUsbDevices(Context context){
         Intent intent = new Intent(ACTION_USB_DEVICE_ATTACHED_CHECK);
-        UsbDevice device = null;
+        UsbDevice device;
         if (null == usbDevice) {
             device = UsbUtils.scanUsbDevices(context, filter);
+        } else {
+            device = usbDevice;
         }
         intent.putExtra(UsbManager.EXTRA_DEVICE, device);
         onReceive(context.getApplicationContext(), intent);
     }
 
-
     private void updateConnectedListener(UsbDevice usbDevice) {
         setUsbDevice(usbDevice);
-        if (null != listner) {
-            listner.connect(usbDevice);
+        if (null != listener) {
+            listener.connect(usbDevice);
         }
     }
 
     private void updateGrantedListener(UsbDevice usbDevice, boolean grant) {
         setUsbDevice(usbDevice);
-        if (null != listner) {
-            listner.granted(usbDevice, grant);
+        if (null != listener) {
+            listener.granted(usbDevice, grant);
         }
     }
 
     private void updateDisconnectedListener(UsbDevice usbDevice) {
-        if (null != listner) {
-            listner.disconnect(usbDevice);
+        if (null != listener) {
+            listener.disconnect(usbDevice);
         }
         setUsbDevice(null);
     }
@@ -120,7 +132,7 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
 
     public void close() {
         usbDevice = null;
-        listner = null;
+        listener = null;
         filter = null;
     }
 
