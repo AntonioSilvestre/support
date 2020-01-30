@@ -5,18 +5,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".MainActivity"
-    tools:showIn="@layout/activity_main">
+    tools:context=".activities.DemoRfidReader"
+    tools:showIn="@layout/activity_main_rfidreader">
 
     <Button
         android:id="@+id/connection_button_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:minHeight="62dp"
         android:layout_margin="@dimen/fab_margin"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/connection_button_2"
+        app:layout_constraintRight_toLeftOf="@id/esempio1_textview_1"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintVertical_chainStyle="spread"
         >
@@ -24,9 +25,10 @@
     </Button>
 
     <Button
-        android:id="@+id/connection_button_2"
+        android:id="@+id/esempio1_textview_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:minHeight="62dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/connection_button_1"

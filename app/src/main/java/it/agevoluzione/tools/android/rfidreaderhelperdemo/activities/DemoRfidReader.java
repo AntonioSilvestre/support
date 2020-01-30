@@ -1,4 +1,4 @@
-package it.agevoluzione.tools.android.rfidreaderhelperdemo;
+package it.agevoluzione.tools.android.rfidreaderhelperdemo.activities;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -16,8 +16,9 @@ import com.google.android.material.snackbar.Snackbar;
 
 import it.agevoluzione.tools.android.rfidreaderhelper.ReaderConfiguratorImpl;
 import it.agevoluzione.tools.android.rfidreaderhelper.ReaderHelper;
+import it.agevoluzione.tools.android.rfidreaderhelperdemo.R;
 
-public class MainActivity extends AppCompatActivity {
+public class DemoRfidReader extends AppCompatActivity {
 
     ReaderHelper readerHelper;
 
@@ -40,14 +41,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_rfidreader);
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
 
 //        Bind View
         button1 = findViewById(R.id.connection_button_1);
-        button2 = findViewById(R.id.connection_button_2);
+        button2 = findViewById(R.id.esempio1_textview_1);
 
         testo = findViewById(R.id.testo);
 
@@ -58,11 +59,11 @@ public class MainActivity extends AppCompatActivity {
                 if (null != tag) {
                     switch (tag) {
                         case "Request":
-                            readerHelper.recheckPresence(MainActivity.this);
+                            readerHelper.recheckPresence(DemoRfidReader.this);
                             break;
                         case "Connect":
                             try {
-                                readerHelper.connect(MainActivity.this, new ReaderConfiguratorImpl());
+                                readerHelper.connect(DemoRfidReader.this, new ReaderConfiguratorImpl());
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                             readerHelper.stopReading();
                             break;
                         case "Disconnect":
-                            readerHelper.disconnect(MainActivity.this);
+                            readerHelper.disconnect(DemoRfidReader.this);
                             break;
                     }
                 }
@@ -169,11 +170,11 @@ public class MainActivity extends AppCompatActivity {
         readerHelper.setErrorListener(new ReaderHelper.ErrorListener() {
             @Override
             public void onError(final Throwable throwable) {
-                Log.e("MainActivity", "ERR", throwable);
+                Log.e("DemoRfidReader", "ERR", throwable);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(MainActivity.this,"ERR: "+throwable.getMessage(),Toast.LENGTH_LONG).show();
+                        Toast.makeText(DemoRfidReader.this,"ERR: "+throwable.getMessage(),Toast.LENGTH_LONG).show();
                     }
                 });
             }

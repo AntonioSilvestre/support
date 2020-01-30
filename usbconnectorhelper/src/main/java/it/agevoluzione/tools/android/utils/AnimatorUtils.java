@@ -1,10 +1,16 @@
 package it.agevoluzione.tools.android.utils;
 
 import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.view.View;
-import android.view.animation.AccelerateInterpolator;
+import android.widget.TextView;
+
+import androidx.vectordrawable.graphics.drawable.ArgbEvaluator;
 
 public class AnimatorUtils {
 
@@ -97,6 +103,59 @@ public class AnimatorUtils {
                 view.setScaleX(to);
             }
 
+        });
+        return  anim;
+    }
+
+    public static Animator changeTextColor(final TextView view, final int endColor) {
+
+        int initColor = view.getTextColors().getDefaultColor();
+        ValueAnimator anim = ValueAnimator.ofObject(new ArgbEvaluator(), initColor, endColor);
+        ValueAnimator.AnimatorUpdateListener list = new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int val = (int) animation.getAnimatedValue();
+                view.setTextColor(val);
+            }
+        };
+
+        anim.addListener(new ShortenAnimatorListner() {
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                view.setTextColor(endColor);
+            }
+        });
+        return  anim;
+    }
+
+    public static Animator changeBackgroudColor(final View view, final int endColor) {
+
+
+        Drawable drawable = view.getBackground();
+        int begin;
+        if (drawable == null) {
+            begin = Color.WHITE;
+        } else if (drawable instanceof ColorDrawable){
+            ColorDrawable colorDrawable = (ColorDrawable) drawable;
+            begin = colorDrawable.getColor();
+        } else {
+            begin = Color.WHITE;
+        }
+        ValueAnimator anim = ValueAnimator.ofObject(new ArgbEvaluator(), begin, endColor);
+        ValueAnimator.AnimatorUpdateListener list = new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int val = (int) animation.getAnimatedValue();
+                view.setBackgroundColor(val);
+            }
+        };
+        anim.addUpdateListener(list);
+
+        anim.addListener(new ShortenAnimatorListner() {
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                view.setBackgroundColor(endColor);
+            }
         });
         return  anim;
     }
