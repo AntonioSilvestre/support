@@ -21,6 +21,11 @@ public class Locker<E> {
         locker = new Object();
     }
 
+    public Locker(E payload) {
+        locker = new Object();
+        setPayload(payload);
+    }
+
     public void setPayload(E payload) {
         synchronized (locker) {
             this.payload = payload;

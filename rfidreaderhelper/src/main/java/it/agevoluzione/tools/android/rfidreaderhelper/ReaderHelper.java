@@ -88,6 +88,7 @@ public final class ReaderHelper implements IReaderHelper {
     private UsbConnectionMonitor usbConnectionMonitor;
 
     private AsyncConfigReaderTask asyncTaskConfig;
+    private AsyncReaderTask asyncReaderTask;
 
 //    Listeners
 //      My Listeners
@@ -120,13 +121,13 @@ public final class ReaderHelper implements IReaderHelper {
                 asyncTaskConfig = new AsyncConfigReaderTask(this)
                         .setTimeout(2500)
                         .setConfigurator(configurator);
+                asyncTaskConfig.execute(context);
             }
-            asyncTaskConfig.execute(context);
         }
     }
-    ExecutorService executorService;
-    Future future;
-    Reading reading;
+//    ExecutorService executorService;
+//    Future future;
+//    Reading reading;
     @Override
     public synchronized void startReading() throws Exception {
 //        synchronized (this) {
@@ -136,66 +137,58 @@ public final class ReaderHelper implements IReaderHelper {
 //        }
         synchronized (this) {
             canOperateWithExeption(READING);
-            if (null == future || future.isDone()) {
-                executorService = Executors.newSingleThreadExecutor();
-                reading = new Reading(this);
-                future = executorService.submit(reading);
+            if (null == asyncReaderTask || AsyncTask.Status.RUNNING != asyncReaderTask.getStatus()) {
+                asyncReaderTask = new AsyncReaderTask(this);
+                asyncReaderTask.execute(getReader());
             }
+//                executorService = Executors.newSingleThreadExecutor();
+//                reading = new Reading(this);
+//                future = executorService.submit(reading);
+//            }
         }
     }
 
-    private static class Reading implements Runnable {
-        private Locker<Boolean> locker;
-        private ReaderHelper bind;
-
-        private Reading(ReaderHelper reader) {
-            this.bind = reader;
-            locker = new Locker<>();
-        }
-
-        @Override
-        public void run() {
-            locker.setPayload(true);
-            bind.reader.startReading();
-            try {
-                bind.tryUpdateStatus(READING);
-                while (locker.getPayload()) {
-                    locker.lock(150L);
-                }
-                bind.reader.stopReading();
-                bind.tryUpdateStatus(READER_CONFIGURED);
-            } catch (Exception e) {
-                bind.updatetErrorListener(e);
-            } finally {
-                bind = null;
-                locker = null;
-            }
-        }
-
-        public void stop() {
-            locker.setPayload(false);
-            locker.unlockAll();
-        }
-
-
-    }
+//    private static class Reading implements Runnable {
+//        private Locker<Boolean> locker;
+//        private ReaderHelper bind;
+//
+//        private Reading(ReaderHelper reader) {
+//            this.bind = reader;
+//            locker = new Locker<>();
+//        }
+//
+//        @Override
+//        public void run() {
+//            locker.setPayload(true);
+//            bind.reader.startReading();
+//            try {
+//                bind.tryUpdateStatus(READING);
+//                while (locker.getPayload()) {
+//                    locker.lock(150L);
+//                }
+//                bind.reader.stopReading();
+//                bind.tryUpdateStatus(READER_CONFIGURED);
+//            } catch (Exception e) {
+//                bind.updatetErrorListener(e);
+//            } finally {
+//                bind = null;
+//                locker = null;
+//            }
+//        }
+//
+//        public void stop() {
+//            locker.setPayload(false);
+//            locker.unlockAll();
+//        }
+//
+//
+//    }
 
     @Override
     public synchronized void stopReading() {
         synchronized (this) {
             if (isReading()) {
-                reading.stop();
-
-//                try {
-//                    if (((SerialReader)reader).stopReading()) {
-//                        tryUpdateStatus(READER_CONFIGURED);
-//                    } else {
-//                        updatetErrorListener(new Exception("Reader Not Stopped!"));
-//                    }
-//                } catch (Exception e) {
-//                    updatetErrorListener(e);
-//                }
-
+                asyncReaderTask.stopReading();
             }
         }
     }
@@ -238,15 +231,15 @@ public final class ReaderHelper implements IReaderHelper {
         synchronized (this) {
 
 //todo verificare se mettere qui o in stop reading
-            if (null != future) {
-                future.cancel(true);
-                future = null;
+            if (null != asyncReaderTask) {
+                asyncReaderTask.cancel(true);
+                asyncReaderTask = null;
             }
-            if (null != executorService) {
-                executorService.shutdownNow();
-                executorService = null;
+
+            if (null != asyncTaskConfig) {
+                asyncTaskConfig.cancel(true);
+                asyncTaskConfig = null;
             }
-            reading = null;
 
             if (null != usbConnectionMonitor) {
                 context.unregisterReceiver(usbConnectionMonitor);
@@ -366,19 +359,21 @@ public final class ReaderHelper implements IReaderHelper {
         }
     }
 
-    private void connectToReader(Reader reader) throws Exception {
-        canOperate(READER_CONNECTED);
+    private int connectToReader(Reader reader) throws Exception {
+        canOperateWithExeption(READER_CONNECTED);
         reader.connect();
         setReader(reader);
         tryUpdateStatus(READER_CONNECTED);
+        return READER_CONNECTED;
     }
 
-    private void configureConnectedReader(Reader reader, ReaderConfigurator configurator) throws Exception {
+    private int configureConnectedReader(Reader reader, ReaderConfigurator configurator) throws Exception {
         synchronized (this) {
             canOperateWithExeption(READER_CONFIGURED);
             configurator.configure(reader);
             setReader(reader);
-            tryUpdateStatus(READER_CONFIGURED);
+//            tryUpdateStatus(READER_CONFIGURED);
+            return READER_CONFIGURED;
         }
     }
 
@@ -482,8 +477,50 @@ public final class ReaderHelper implements IReaderHelper {
         }
     }
 
-    private static class AsyncConfigReaderTask extends AsyncTask<Context,Integer,Exception> {
-        private ReaderHelper bind;
+
+    private static abstract class AsyncTasks<E> extends AsyncTask<E,Integer,Exception> {
+        protected ReaderHelper bind;
+
+        public AsyncTasks(ReaderHelper bind) {
+            this.bind = bind;
+        }
+
+        @Override
+        protected void onCancelled(Exception e) {
+            super.onCancelled(e);
+            if (null != e) {
+                bind.updatetErrorListener(e);
+            }
+            close();
+        }
+
+        @Override
+        protected void onPostExecute(Exception e) {
+            super.onPostExecute(e);
+            if (null != e) {
+                bind.updatetErrorListener(e);
+            }
+            close();
+        }
+
+        protected void close() {
+            bind = null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            int status = values[0];
+            try {
+                bind.tryUpdateStatus(status);
+            } catch (Exception e) {
+                bind.updatetErrorListener(e);
+            }
+        }
+
+    }
+
+    private static class AsyncConfigReaderTask extends AsyncTasks<Context> {
         private ReaderConfigurator configurator;
         private long timeout;
 
@@ -491,12 +528,13 @@ public final class ReaderHelper implements IReaderHelper {
         private ExecutorService connectorService;
 
         public AsyncConfigReaderTask(ReaderHelper bind) {
+            super(bind);
             connectorService = Executors.newSingleThreadExecutor();
-            this.bind = bind;
         }
 
-        private void close() {
-            bind = null;
+        @Override
+        protected void close() {
+            super.close();
             configurator = null;
             if (null != future) {
                 future.cancel(true);
@@ -525,31 +563,6 @@ public final class ReaderHelper implements IReaderHelper {
             return this;
         }
 
-        @Override
-        protected void onCancelled() {
-            super.onCancelled();
-            close();
-        }
-
-        @Override
-        protected void onPostExecute(Exception e) {
-            super.onPostExecute(e);
-            if (null != e) {
-                bind.updatetErrorListener(e);
-            }
-            close();
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            int status = values[0];
-            try {
-                bind.tryUpdateStatus(status);
-            } catch (Exception e) {
-                bind.updatetErrorListener(e);
-            }
-        }
 
         @Override
         protected Exception doInBackground(Context... contexts) {
@@ -577,7 +590,8 @@ public final class ReaderHelper implements IReaderHelper {
 
                 connectedReader = future.get(timeout,TimeUnit.MILLISECONDS);
 
-                bind.configureConnectedReader(connectedReader, configurator);
+                int stat = bind.configureConnectedReader(connectedReader, configurator);
+                publishProgress(stat);
 
             } catch (ExecutionException e) {
                 err = e;
@@ -587,7 +601,7 @@ public final class ReaderHelper implements IReaderHelper {
                 err = e;
             } catch (TimeoutException e) {
                 err = new Exception("Rfid reader may not be attached to USB");
-                publishProgress(USB_DEVICE_AUTHORIZATION_GRANT);
+                publishProgress(USB_DEVICE_ATTACHED_NOT_AUTHORIZED);
             } catch (Exception e) {
                 err = e;
             }
@@ -595,5 +609,48 @@ public final class ReaderHelper implements IReaderHelper {
             return err;
         }
 
+    }
+
+    private static class AsyncReaderTask extends AsyncTasks<Reader>{
+
+        private Locker<Boolean> locker;
+
+        public AsyncReaderTask(ReaderHelper bind) {
+            super(bind);
+            locker = new Locker<>(false);
+        }
+
+        @Override
+        protected Exception doInBackground(Reader... readers) {
+            Exception err = null;
+            locker.setPayload(true);
+//            bind.reader.startReading();
+            Reader reader = readers[0];
+            try {
+                reader.startReading();
+                publishProgress(READING);
+                while (locker.getPayload()) {
+                    locker.lock(150L);
+                }
+                reader.stopReading();
+                publishProgress(READER_CONFIGURED);
+            } catch (Exception e) {
+                err = e;
+            } finally {
+                locker = null;
+            }
+            return  err;
+        }
+
+        @Override
+        protected void close() {
+            super.close();
+            locker = null;
+        }
+
+        public void stopReading() {
+            locker.setPayload(false);
+            locker.unlockAll();
+        }
     }
 }
