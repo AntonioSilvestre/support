@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".activities.DemoRfidReader"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:showIn="@layout/activity_main_animator"
+
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:text="Esempi"
+        android:padding="16dp"
+        >
+    </TextView>
+<!--    <View-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="1dp"-->
+<!--        android:background="#FFFFFF"-->
+<!--        android:alpha="0.20"-->
+<!--        android:layout_marginBottom="10dp">-->
+<!--    </View>-->
+    <it.agevoluzione.tools.android.customView.HorizontalDivider
+        android:layout_width="wrap_content"
+        android:layout_height="1dp"
+        app:color_theme="dark"
+        />
+
+    <include layout="@layout/animator_esempio_1"/>
+
+    <it.agevoluzione.tools.android.customView.HorizontalDivider
+        android:layout_width="wrap_content"
+        android:layout_height="1dp"
+        app:color_theme="dark"
+        />
+
+    <include layout="@layout/animator_esempio_2"/>
+
+
+
+</LinearLayout>

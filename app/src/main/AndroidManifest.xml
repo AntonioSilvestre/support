@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".MainActivityDemo"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -22,14 +22,40 @@
 
         </activity>
 
+<!--        Rfid Reader DEMO -->
+        <activity
+            android:name=".activities.DemoRfidReader"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+
 <!--        Record receiver with meta-data -->
         <receiver android:name="it.agevoluzione.tools.android.usbconnectorhelper.UsbConnectionMonitor">
             <meta-data
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />
-<!--        Record receiver with meta-data -->
-
         </receiver>
+<!--        Record receiver with meta-data -->
+<!--        END Rfid Reader DEMO -->
+
+<!--        DemoAnimator DEMO -->
+        <activity
+            android:name=".activities.DemoAnimator"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+<!--        END DemoAnimator DEMO -->
+
+<!--        DemoDialogLoader DEMO -->
+        <activity
+            android:name=".activities.DemoDialogLoader"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+<!--        END DemoDialogLoader DEMO -->
+
+
+
     </application>
 
 </manifest>

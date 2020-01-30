@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".activities.DemoAnimator"
+    tools:showIn="@layout/animator_content_main">
+
+
+    <TextView
+        android:text="Hide Show"
+        android:id="@+id/esempio2_title_1"
+        android:textSize="18sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/esempio2_textview_1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintVertical_chainStyle="spread"
+        >
+
+    </TextView>
+
+
+    <TextView
+        android:id="@+id/esempio2_textview_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="View 1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/esempio2_switch_group_1"
+        app:layout_constraintTop_toBottomOf="@id/esempio2_title_1" />
+
+
+    <LinearLayout
+        android:id="@+id/esempio2_switch_group_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/esempio2_title_1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/esempio2_textview_1"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintVertical_chainStyle="spread"
+        android:orientation="horizontal">
+
+
+        <Switch
+            android:text="scross fade"
+            android:id="@+id/esempio2_switch_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
+            />
+
+        <Switch
+            android:text="rotate"
+            android:id="@+id/esempio2_switch_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
+            />
+
+        <Switch
+            android:text="altro"
+            android:id="@+id/esempio2_switch_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
+            />
+
+
+
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
