@@ -9,6 +9,10 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.thingmagic.AndroidUsbReflection;
 import com.thingmagic.ReadExceptionListener;
@@ -104,7 +108,7 @@ public final class ReaderHelper implements IReaderHelper {
         synchronized (this) {
             setStatus(INITIALIZED);
 //            usbManager = AndroidUtils.usbManager(context);
-            generateInternalListner();
+            generateInternalListener();
             configureUsbConnectionMonitor(context);
         }
     }
@@ -241,11 +245,7 @@ public final class ReaderHelper implements IReaderHelper {
                 asyncTaskConfig = null;
             }
 
-            if (null != usbConnectionMonitor) {
-                context.unregisterReceiver(usbConnectionMonitor);
-                usbConnectionMonitor.close();
-                usbConnectionMonitor = null;
-            }
+            closeUsbConnectionMonitor(context);
 
             usbDevice = null;
 
@@ -258,6 +258,39 @@ public final class ReaderHelper implements IReaderHelper {
 
             setStatus(NOT_INITIALIZED);
         }
+    }
+    public void setLifecycleOwner(AppCompatActivity appCompatActivity) {
+        setLifecycleOwner(appCompatActivity, appCompatActivity);
+
+    }
+
+    public void setLifecycleOwner(LifecycleOwner lifeCycleOwner, final Context context) {
+        lifeCycleOwner.getLifecycle().addObserver(new LifecycleEventObserver() {
+            @Override
+            public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
+                switch (event) {
+                    case ON_CREATE:
+                        break;
+                    case ON_START:
+                        configureUsbConnectionMonitor(context);
+                        break;
+                    case ON_RESUME:
+                        break;
+                    case ON_PAUSE:
+                        break;
+                    case ON_STOP:
+                        disconnect(context);
+                        closeUsbConnectionMonitor(context);
+                        break;
+                    case ON_DESTROY:
+                        close(context);
+                        source.getLifecycle().removeObserver(this);
+                        break;
+                    case ON_ANY:
+                        break;
+                }
+            }
+        });
     }
 
     public boolean isReading() {
@@ -306,6 +339,14 @@ public final class ReaderHelper implements IReaderHelper {
 
     public String getStatusName() {
         return getStatusName(getStatus());
+    }
+
+    private void closeUsbConnectionMonitor(Context context) {
+        if (null != usbConnectionMonitor) {
+            context.unregisterReceiver(usbConnectionMonitor);
+            usbConnectionMonitor.close();
+            usbConnectionMonitor = null;
+        }
     }
 
     private void configureUsbConnectionMonitor(final Context context) {
@@ -450,12 +491,12 @@ public final class ReaderHelper implements IReaderHelper {
     }
 
     private void updateReaderListener(TagReadData tagReadData) {
-        if (null != readerListener) {
+        if (null != readerListener && canOperate(READING)) {
             readerListener.onRead(tagReadData);
         }
     }
 
-    private void generateInternalListner() {
+    private void generateInternalListener() {
         myReaderListener = new ReadListener() {
             @Override
             public void tagRead(Reader reader, TagReadData tagReadData) {
@@ -471,12 +512,9 @@ public final class ReaderHelper implements IReaderHelper {
     }
 
     private void setListenerToReader(Reader reader) {
-        synchronized (reader) {
-            reader.addReadListener(myReaderListener);
-            reader.addReadExceptionListener(myErrorListener);
-        }
+        reader.addReadListener(myReaderListener);
+        reader.addReadExceptionListener(myErrorListener);
     }
-
 
     private static abstract class AsyncTasks<E> extends AsyncTask<E,Integer,Exception> {
         protected ReaderHelper bind;

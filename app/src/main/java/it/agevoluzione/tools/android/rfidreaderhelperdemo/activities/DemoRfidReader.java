@@ -17,26 +17,27 @@ import com.google.android.material.snackbar.Snackbar;
 import it.agevoluzione.tools.android.rfidreaderhelper.ReaderConfiguratorImpl;
 import it.agevoluzione.tools.android.rfidreaderhelper.ReaderHelper;
 import it.agevoluzione.tools.android.rfidreaderhelperdemo.R;
+import it.agevoluzione.tools.android.utils.AnimatorUtils;
 
 public class DemoRfidReader extends AppCompatActivity {
 
-    ReaderHelper readerHelper;
+    private ReaderHelper readerHelper;
 
-    Button button1;
-    Button button2;
-    TextView testo;
+    private Button button1;
+    private Button button2;
+    private TextView testo;
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        readerHelper.stopReading();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        readerHelper.close(this);
-    }
+//    @Override
+//    protected void onStop() {
+//        super.onStop();
+//        readerHelper.stopReading();
+//    }
+//
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//        readerHelper.close(this);
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +94,7 @@ public class DemoRfidReader extends AppCompatActivity {
 
 //        Create Reader
         readerHelper = new ReaderHelper();
+        readerHelper.setLifecycleOwner(this);
         readerHelper.setStatusListener(new ReaderHelper.StatusListener() {
             @Override
             public void onStatusChange(final int status) {
@@ -105,59 +107,75 @@ public class DemoRfidReader extends AppCompatActivity {
 
                         switch (status) {
                             case ReaderHelper.NOT_INITIALIZED:
-                                testo.setText("");
                                 button1.setText("Non Inizialized!");
                                 button1.setEnabled(false);
-                                button2.setVisibility(View.INVISIBLE);
+//                                AnimatorUtils.changeText(button1, "Non Inizialized!").start();
+                                button2.setVisibility(View.GONE);
+                                testo.setText("");
                                 break;
                             case ReaderHelper.INITIALIZED:
-                                testo.setText("");
                                 button1.setEnabled(false);
                                 button1.setText("No Device!");
-                                button2.setVisibility(View.INVISIBLE);
+//                                AnimatorUtils.changeText(button1, "No Device!").start();
+                                button2.setVisibility(View.GONE);
+                                testo.setText("");
                                 break;
                             case ReaderHelper.USB_DEVICE_ATTACHED_NOT_AUTHORIZED:
-                                testo.setText("");
                                 button1.setText("Request");
                                 button1.setTag("Request");
                                 button1.setEnabled(true);
-                                button2.setVisibility(View.INVISIBLE);
+//                                AnimatorUtils.changeText(button1, "Request").start();
+                                button2.setVisibility(View.GONE);
+                                testo.setText("");
                                 break;
                             case ReaderHelper.USB_DEVICE_AUTHORIZATION_GRANT:
-                                testo.setText("");
                                 button1.setText("Connect");
                                 button1.setTag("Connect");
                                 button1.setEnabled(true);
-                                button2.setVisibility(View.INVISIBLE);
+//                                AnimatorUtils.changeText(button1, "Connect").start();
+                                button2.setVisibility(View.GONE);
+                                testo.setText("");
                                 break;
                             case ReaderHelper.READER_CONNECTING:
-                                testo.setText("");
                                 button1.setText("Connecting...");
                                 button1.setEnabled(false);
-                                button2.setVisibility(View.INVISIBLE);
+//                                AnimatorUtils.changeText(button1, "Connecting...").start();
+                                button2.setVisibility(View.GONE);
+                                testo.setText("");
                                 break;
                             case ReaderHelper.READER_CONNECTED:
-                                testo.setText("");
                                 button1.setText("Configuring...");
                                 button1.setEnabled(false);
-                                button2.setVisibility(View.INVISIBLE);
+//                                AnimatorUtils.changeText(button1, "Configuring...").start();
+//                                AnimatorUtils.fadeOut(button2).start();
+                                button2.setVisibility(View.GONE);
+                                testo.setText("");
                                 break;
                             case ReaderHelper.READER_CONFIGURED:
-                                testo.setText("");
                                 button1.setText("Read");
+                                button1.setEnabled(true);
+//                                AnimatorUtils.changeText(button1, "Read").start();
                                 button1.setTag("Read");
-                                button1.setEnabled(true);
-                                button2.setVisibility(View.INVISIBLE);
-                                break;
-                            case ReaderHelper.READING:
-                                testo.setText("Reading...");
-                                button1.setText("Stop");
-                                button1.setEnabled(true);
-                                button1.setTag("Stop");
+
                                 button2.setEnabled(true);
                                 button2.setVisibility(View.VISIBLE);
                                 button2.setText("Disconnect");
+//                                AnimatorUtils.changeText(button2, "Disconnect").start();
                                 button2.setTag("Disconnect");
+                                testo.setText("");
+                                break;
+                            case ReaderHelper.READING:
+                                button1.setEnabled(true);
+                                button1.setText("Stop");
+//                                AnimatorUtils.changeText(button1, "Stop").start();
+                                button1.setTag("Stop");
+
+                                button2.setEnabled(true);
+                                button2.setVisibility(View.VISIBLE);
+                                button2.setText("Disconnect");
+//                                AnimatorUtils.changeText(button2, "Disconnect").start();
+                                button2.setTag("Disconnect");
+                                testo.setText("Reading...");
                                 break;
                         }
                     }

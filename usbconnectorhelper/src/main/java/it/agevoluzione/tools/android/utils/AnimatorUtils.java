@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -126,6 +127,61 @@ public class AnimatorUtils {
             }
         });
         return  anim;
+    }
+
+    public static Animator changeText(final TextView view, final String newString) {
+
+        boolean haveText = null == view.getText() || view.getText().toString().isEmpty();
+
+        ValueAnimator fadeOut;
+        ValueAnimator fadeIn;
+        if (haveText) {
+            fadeOut = ValueAnimator.ofFloat(1, 0.5f);
+            fadeIn = ValueAnimator.ofFloat(0.5f,1);
+        } else {
+            fadeIn = ValueAnimator.ofFloat(0,1);
+            fadeOut = null;
+        }
+        final ColorStateList colorStateListBegin = view.getTextColors();
+        final int color = colorStateListBegin.getDefaultColor();
+////                int alpha = (color >> 24) & 0xff; // or color >>> 24
+////                int red = (color >> 16) & 0xff;
+////                int green = (color >>  8) & 0xff;
+////                int blue = (color      ) & 0xff;
+        final int alpha = Color.alpha(color); // or color >>> 24
+        final int red = Color.red(color);
+        final int green = Color.green(color);
+        final int blue = Color.blue(color);
+
+
+        ValueAnimator.AnimatorUpdateListener animList = new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float val = (float) animation.getAnimatedValue();
+//                int val = (int) animation.getAnimatedValue();
+                int newAlpha = Math.round(alpha * val);
+                view.setTextColor(colorStateListBegin.withAlpha(newAlpha));
+            }
+        };
+
+        fadeIn.addListener(new ShortenAnimatorListner() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                view.setText(newString);
+            }
+        });
+
+        if (null == fadeOut) {
+            fadeIn.addUpdateListener(animList);
+            return fadeIn;
+        } else {
+            fadeOut.addUpdateListener(animList);
+            AnimatorSet anim = new AnimatorSet();
+            anim.play(fadeOut).before(fadeIn);
+            anim.setDuration(300);
+            return anim;
+        }
     }
 
     public static Animator changeBackgroudColor(final View view, final int endColor) {
