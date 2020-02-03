@@ -2,23 +2,14 @@ package it.agevoluzione.tools.android.rfidreaderhelperdemo.activities;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.google.android.material.snackbar.Snackbar;
-
-import it.agevoluzione.tools.android.rfidreaderhelper.ReaderConfiguratorImpl;
-import it.agevoluzione.tools.android.rfidreaderhelper.ReaderHelper;
 import it.agevoluzione.tools.android.rfidreaderhelperdemo.R;
 import it.agevoluzione.tools.android.utils.AnimatorUtils;
 
@@ -32,11 +23,11 @@ public class DemoAnimator extends AppCompatActivity {
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        esemptio1();
+        esempio1();
 
     }
 
-    private void esemptio1() {
+    private void esempio1() {
         RadioGroup radioGroup = findViewById(R.id.esempio1_ragio_group_1);
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override

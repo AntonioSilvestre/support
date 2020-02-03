@@ -104,7 +104,6 @@ public class DemoRfidReader extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-
                         switch (status) {
                             case ReaderHelper.NOT_INITIALIZED:
                                 button1.setText("Non Inizialized!");
