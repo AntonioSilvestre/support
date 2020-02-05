@@ -42,26 +42,29 @@ public class UsbUtils {
 //        return connectedDeviceNames;
 //    }
 
-    public static void closeUsbConnection(@NonNull UsbManager usbManager, @NonNull UsbDevice device) {
+    public static boolean closeUsbConnection(@NonNull UsbManager usbManager, @NonNull UsbDevice device) {
         if (null != device && null != usbManager) {
 //            if (usbManager.hasPermission(device)) {
             try {
-                UsbDeviceConnection connection = usbManager.openDevice(device);
-                if (null != connection) {
-                    int size = device.getInterfaceCount();
-                    for (int i = 0; i < size; i++) {
-                        UsbInterface usbInterface = device.getInterface(i);
-                        connection.releaseInterface(usbInterface);
-                        connection.close();
+                if (usbManager.hasPermission(device)) {
+                    UsbDeviceConnection connection = usbManager.openDevice(device);
+                    if (null != connection) {
+                        int size = device.getInterfaceCount();
+                        for (int i = 0; i < size; i++) {
+                            UsbInterface usbInterface = device.getInterface(i);
+                            connection.releaseInterface(usbInterface);
+                            connection.close();
+                            return true;
+                        }
                     }
                 }
             } catch (Exception ignored) {}
-//            }
         }
+        return false;
     }
 
-    public static void closeUsbConnection(@NonNull Context context, @NonNull UsbDevice device) {
-        closeUsbConnection(AndroidUtils.usbManager(context), device);
+    public static boolean closeUsbConnection(@NonNull Context context, @NonNull UsbDevice device) {
+        return closeUsbConnection(AndroidUtils.usbManager(context), device);
     }
 
 
