@@ -125,7 +125,8 @@ public final class AndroidUtils {
         if (null != pwrMgr) {
             PowerManager.WakeLock wl = pwrMgr.newWakeLock(
 //                    PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.FULL_WAKE_LOCK
-                    PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.PARTIAL_WAKE_LOCK
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP
+//                    PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.PARTIAL_WAKE_LOCK
 //                    PowerManager.PARTIAL_WAKE_LOCK
                     , "it.agevoluzione.utils.reminder.utils:AndroidUtils");
             wl.acquire(timeout);
@@ -138,7 +139,8 @@ public final class AndroidUtils {
         if (null != pwrMgr) {
             PowerManager.WakeLock wl = pwrMgr.newWakeLock(
 //                    PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.FULL_WAKE_LOCK
-                    PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.PARTIAL_WAKE_LOCK
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP
+//                    PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.PARTIAL_WAKE_LOCK
 //                    PowerManager.PARTIAL_WAKE_LOCK
                     , "it.agevoluzione.utils.reminder.utils:AndroidUtils");
             wl.release();
@@ -289,7 +291,7 @@ public final class AndroidUtils {
                 && wifiManager.getConnectionInfo().getNetworkId() != -1;
     }
 
-    @RequiresPermission(allOf = {Manifest.permission.ACCESS_WIFI_STATE, Manifest.permission.CHANGE_WIFI_STATE})
+    @RequiresPermission(allOf = {Manifest.permission.ACCESS_WIFI_STATE, Manifest.permission.CHANGE_WIFI_STATE, Manifest.permission.ACCESS_FINE_LOCATION})
     public static void wifiTryToConnect(@NonNull WifiManager wifiManager, @NonNull ScanResult result) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             WifiNetworkSuggestion sug = new WifiNetworkSuggestion.Builder().setSsid(result.SSID).build();
