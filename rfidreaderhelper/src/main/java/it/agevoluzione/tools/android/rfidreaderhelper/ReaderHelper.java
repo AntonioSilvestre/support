@@ -110,6 +110,9 @@ public final class ReaderHelper implements IReaderHelper {
 //            usbManager = AndroidUtils.usbManager(context);
             generateInternalListener();
             configureUsbConnectionMonitor(context);
+            if (context instanceof LifecycleOwner) {
+                setLifecycleOwner((LifecycleOwner) context, context);
+            }
         }
     }
 
@@ -198,7 +201,7 @@ public final class ReaderHelper implements IReaderHelper {
     @Override
     public synchronized void stopReading() {
         synchronized (this) {
-            if (isReading()) {
+            if (isReading() && AsyncTask.Status.RUNNING == asyncReaderTask.getStatus()) {
                 asyncReaderTask.stopReading();
             }
         }
@@ -692,7 +695,7 @@ public final class ReaderHelper implements IReaderHelper {
             try {
                 reader.startReading();
                 publishProgress(READING);
-                while (locker.getPayload()) {
+                while (null != locker && locker.getPayload()) {
                     locker.lock(150L);
                 }
                 reader.stopReading();
@@ -712,8 +715,10 @@ public final class ReaderHelper implements IReaderHelper {
         }
 
         public void stopReading() {
-            locker.setPayload(false);
-            locker.unlockAll();
+            if (null != locker) {
+                locker.setPayload(false);
+                locker.unlockAll();
+            }
         }
     }
 }
