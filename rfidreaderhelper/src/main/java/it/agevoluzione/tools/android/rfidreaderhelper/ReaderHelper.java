@@ -683,13 +683,12 @@ public final class ReaderHelper implements IReaderHelper {
 
         public AsyncReaderTask(ReaderHelper bind) {
             super(bind);
-            locker = new Locker<>(false);
         }
 
         @Override
         protected Exception doInBackground(Reader... readers) {
             Exception err = null;
-            locker.setPayload(true);
+            locker = new Locker<>(true);
 //            bind.reader.startReading();
             Reader reader = readers[0];
             try {

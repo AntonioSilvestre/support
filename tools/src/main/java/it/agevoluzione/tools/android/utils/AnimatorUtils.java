@@ -13,7 +13,9 @@ import android.widget.TextView;
 
 import androidx.vectordrawable.graphics.drawable.ArgbEvaluator;
 
-public class AnimatorUtils {
+public final class AnimatorUtils {
+
+    private AnimatorUtils() {}
 
     public static abstract class ShortenAnimatorListner implements Animator.AnimatorListener {
         @Override

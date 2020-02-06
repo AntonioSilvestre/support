@@ -97,6 +97,7 @@ public final class AndroidUtils {
      * @param context
      * @return Returns true if the device is in an interactive state.
      */
+    @SuppressWarnings(value = "Deprecated")
     public static boolean isOn(@NonNull Context context) {
         PowerManager pm = powerManager(context);
         if (null != pm) {

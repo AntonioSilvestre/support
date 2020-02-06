@@ -2,15 +2,14 @@ package it.agevoluzione.tools.android.customView;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import it.agevoluzione.tools.android.R;
 
-import it.agevoluzione.tools.android.usbconnectorhelper.R;
 
 public final class HorizontalDivider extends View {
 

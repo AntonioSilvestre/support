@@ -13,7 +13,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import it.agevoluzione.tools.android.usbconnectorhelper.R;
+import it.agevoluzione.tools.android.R;
 import it.agevoluzione.tools.android.utils.AnimatorUtils;
 
 

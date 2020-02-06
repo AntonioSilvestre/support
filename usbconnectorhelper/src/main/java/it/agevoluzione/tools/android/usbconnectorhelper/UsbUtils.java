@@ -12,13 +12,14 @@ import android.hardware.usb.UsbManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-
 import java.util.HashMap;
 import java.util.Iterator;
 
 import it.agevoluzione.tools.android.utils.AndroidUtils;
 
-public class UsbUtils {
+public final class UsbUtils {
+
+    private UsbUtils() {}
 
     private static final String TAG = "UsbUtils";
     public static final String ACTION_USB_PERMISSION = "it.agevoluzione.USB_PERMISSION";
@@ -54,8 +55,8 @@ public class UsbUtils {
                             UsbInterface usbInterface = device.getInterface(i);
                             connection.releaseInterface(usbInterface);
                             connection.close();
-                            return true;
                         }
+                        return true;
                     }
                 }
             } catch (Exception ignored) {}
