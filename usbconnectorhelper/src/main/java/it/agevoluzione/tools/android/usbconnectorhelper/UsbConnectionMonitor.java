@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
-import android.widget.Toast;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -83,7 +83,8 @@ public class UsbConnectionMonitor extends BroadcastReceiver {
                 }
             }
         }
-        Toast.makeText(context, action, Toast.LENGTH_LONG).show();
+//        Toast.makeText(context, action, Toast.LENGTH_LONG).show();
+        Log.v("UsbConnectionMonitor","Receive=>"+action);
     }
 
     public void scanUsbDevices(Context context){
