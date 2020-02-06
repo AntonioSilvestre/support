@@ -1,2 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="it.agevoluzione.tools.android.rfidreaderhelper" />
+    package="it.agevoluzione.tools.android.rfidreaderhelper" >
+    <uses-feature android:name="android.hardware.usb.host"/>
+    <meta-data
+        android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+        android:resource="@xml/device_filter" />
+</manifest>

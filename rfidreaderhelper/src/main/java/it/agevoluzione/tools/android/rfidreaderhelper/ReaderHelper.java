@@ -9,6 +9,10 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.thingmagic.AndroidUsbReflection;
 import com.thingmagic.ReadExceptionListener;
@@ -82,7 +86,7 @@ public final class ReaderHelper implements IReaderHelper {
         void onRead(TagReadData tagReadData);
     }
 
-    private Reader reader;
+    private Reader connectedReader;
     private UsbDevice usbDevice;
     private boolean androidUsbReflectionSetted;
     private UsbConnectionMonitor usbConnectionMonitor;
@@ -104,8 +108,11 @@ public final class ReaderHelper implements IReaderHelper {
         synchronized (this) {
             setStatus(INITIALIZED);
 //            usbManager = AndroidUtils.usbManager(context);
-            generateInternalListner();
+            generateInternalListener();
             configureUsbConnectionMonitor(context);
+            if (context instanceof LifecycleOwner) {
+                setLifecycleOwner((LifecycleOwner) context, context);
+            }
         }
     }
 
@@ -115,15 +122,22 @@ public final class ReaderHelper implements IReaderHelper {
 
     @Override
     public synchronized void connect(Context context, ReaderConfigurator configurator) throws Exception {
-        synchronized (this) {
-            canOperateWithExeption(READER_CONNECTING);
-            if (null == asyncTaskConfig || AsyncTask.Status.RUNNING != asyncTaskConfig.getStatus()) {
-                asyncTaskConfig = new AsyncConfigReaderTask(this)
-                        .setTimeout(2500)
-                        .setConfigurator(configurator);
-                asyncTaskConfig.execute(context);
+        canOperateWithExeption(READER_CONNECTING);
+//        Reader reader = getConnectedReader();
+//        if (null != reader) {
+//            configurator.configure(reader);
+//        } else {
+            synchronized (this) {
+                if (null == asyncTaskConfig || AsyncTask.Status.RUNNING != asyncTaskConfig.getStatus()) {
+                    asyncTaskConfig = new AsyncConfigReaderTask(this)
+                            .setTimeout(2500)
+                            .setConfigurator(configurator);
+                    asyncTaskConfig.execute(context);
+                } else {
+                    throw new Exception("Connecting process already running");
+                }
             }
-        }
+//        }
     }
 //    ExecutorService executorService;
 //    Future future;
@@ -135,11 +149,11 @@ public final class ReaderHelper implements IReaderHelper {
 //            reader.startReading();
 //            tryUpdateStatus(READING);
 //        }
+        canOperateWithExeption(READING);
         synchronized (this) {
-            canOperateWithExeption(READING);
             if (null == asyncReaderTask || AsyncTask.Status.RUNNING != asyncReaderTask.getStatus()) {
                 asyncReaderTask = new AsyncReaderTask(this);
-                asyncReaderTask.execute(getReader());
+                asyncReaderTask.execute(getConnectedReader());
             }
 //                executorService = Executors.newSingleThreadExecutor();
 //                reading = new Reading(this);
@@ -187,7 +201,7 @@ public final class ReaderHelper implements IReaderHelper {
     @Override
     public synchronized void stopReading() {
         synchronized (this) {
-            if (isReading()) {
+            if (isReading() && AsyncTask.Status.RUNNING == asyncReaderTask.getStatus()) {
                 asyncReaderTask.stopReading();
             }
         }
@@ -199,28 +213,24 @@ public final class ReaderHelper implements IReaderHelper {
             stopReading();
         }
         synchronized(this) {
-
             if (androidUsbReflectionSetted) {
                 AndroidUsbReflection.close();
                 androidUsbReflectionSetted = false;
             }
 
-            if (null != reader) {
-                reader.removeReadExceptionListener(myErrorListener);
-                reader.removeReadListener(myReaderListener);
+            if (null != getConnectedReader()) {
+                connectedReader.removeReadExceptionListener(myErrorListener);
+                connectedReader.removeReadListener(myReaderListener);
 //                ReaderUtils.close(reader);
-                reader.destroy();
-                reader = null;
+                connectedReader.destroy();
+                setConnectedReader(null);
             }
 
             if (null != usbDevice) {
                 UsbUtils.closeUsbConnection(context, usbDevice);
-            }
-
-            try {
                 tryUpdateStatus(USB_DEVICE_ATTACHED_NOT_AUTHORIZED);
-            } catch (Exception e) {
-                updatetErrorListener(e);
+            } else {
+                tryUpdateStatus(INITIALIZED);
             }
         }
     }
@@ -241,23 +251,53 @@ public final class ReaderHelper implements IReaderHelper {
                 asyncTaskConfig = null;
             }
 
-            if (null != usbConnectionMonitor) {
-                context.unregisterReceiver(usbConnectionMonitor);
-                usbConnectionMonitor.close();
-                usbConnectionMonitor = null;
-            }
+            closeUsbConnectionMonitor(context);
 
             usbDevice = null;
 
             myErrorListener = null;
             myReaderListener = null;
 
+//todo verificare se cancellare le interfacce dell utente qui o creare un destroy()
             statusListener = null;
             errorListener = null;
             readerListener = null;
 
             setStatus(NOT_INITIALIZED);
         }
+    }
+
+    public void setLifecycleOwner(AppCompatActivity appCompatActivity) {
+        setLifecycleOwner(appCompatActivity, appCompatActivity);
+    }
+
+    public void setLifecycleOwner(LifecycleOwner lifeCycleOwner, final Context context) {
+        lifeCycleOwner.getLifecycle().addObserver(new LifecycleEventObserver() {
+            @Override
+            public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
+                switch (event) {
+                    case ON_CREATE:
+                        break;
+                    case ON_START:
+                        configureUsbConnectionMonitor(context);
+                        break;
+                    case ON_RESUME:
+                        break;
+                    case ON_PAUSE:
+                        break;
+                    case ON_STOP:
+                        disconnect(context);
+                        closeUsbConnectionMonitor(context);
+                        break;
+                    case ON_DESTROY:
+                        close(context);
+                        source.getLifecycle().removeObserver(this);
+                        break;
+                    case ON_ANY:
+                        break;
+                }
+            }
+        });
     }
 
     public boolean isReading() {
@@ -277,9 +317,9 @@ public final class ReaderHelper implements IReaderHelper {
     }
 
     public int getStatus() {
-        synchronized (ReaderHelper.class) {
+//        synchronized (ReaderHelper.class) {
             return currentStatus;
-        }
+//        }
     }
 
     public String getStatusName(int status) {
@@ -308,51 +348,62 @@ public final class ReaderHelper implements IReaderHelper {
         return getStatusName(getStatus());
     }
 
+    private void closeUsbConnectionMonitor(Context context) {
+        if (null != usbConnectionMonitor) {
+            context.unregisterReceiver(usbConnectionMonitor);
+            usbConnectionMonitor.close();
+            usbConnectionMonitor = null;
+        }
+    }
+
     private void configureUsbConnectionMonitor(final Context context) {
         if (null == usbConnectionMonitor) {
             usbConnectionMonitor = new UsbConnectionMonitor();
+            usbConnectionMonitor.setFilter(ReaderUtils.getFTDIDeviceFilter());
+            usbConnectionMonitor.setListener(new UsbConnectionMonitor.OnUsbConnectioListener() {
+                @Override
+                public void connect(@Nullable UsbDevice device) {
+                    if (canOperate(USB_DEVICE_ATTACHED_NOT_AUTHORIZED)) {
+                        setUsbDevice(device);
+                        int newStatus = null == device ? INITIALIZED : USB_DEVICE_ATTACHED_NOT_AUTHORIZED;
+                        setStatus(newStatus);
+                    }
+                }
+
+                @Override
+                public void granted(UsbDevice device, boolean granted) {
+                    if (canOperate(USB_DEVICE_ATTACHED_NOT_AUTHORIZED)) {
+                        setUsbDevice(device);
+                        int newStatus = granted ? USB_DEVICE_AUTHORIZATION_GRANT : USB_DEVICE_ATTACHED_NOT_AUTHORIZED;
+                        setStatus(newStatus);
+                    }
+                }
+
+                @Override
+                public void disconnect(UsbDevice device) {
+                    setUsbDevice(null);
+                    ReaderHelper.this.disconnect(context);
+                }
+            });
+
+            IntentFilter filter = UsbUtils.getIntenFilter();
+            context.registerReceiver(usbConnectionMonitor, filter);
+
         }
-        usbConnectionMonitor.setFilter(ReaderUtils.getFTDIDeviceFilter());
-        usbConnectionMonitor.setListener(new UsbConnectionMonitor.OnUsbConnectioListener() {
-            @Override
-            public void connect(@Nullable UsbDevice device) {
-                if (canOperate(USB_DEVICE_ATTACHED_NOT_AUTHORIZED)) {
-                    setUsbDevice(device);
-                    int newStatus = null == device ? INITIALIZED : USB_DEVICE_ATTACHED_NOT_AUTHORIZED;
-                    setStatus(newStatus);
-                }
-            }
-
-            @Override
-            public void granted(UsbDevice device, boolean granted) {
-                if (canOperate(USB_DEVICE_ATTACHED_NOT_AUTHORIZED)) {
-                    setUsbDevice(device);
-                    int newStatus = granted ? USB_DEVICE_AUTHORIZATION_GRANT : USB_DEVICE_ATTACHED_NOT_AUTHORIZED;
-                    setStatus(newStatus);
-                }
-            }
-
-            @Override
-            public void disconnect(UsbDevice device) {
-                setUsbDevice(null);
-                ReaderHelper.this.disconnect(context);
-                setStatus(INITIALIZED);
-            }
-        });
-
-        IntentFilter filter = UsbUtils.getIntenFilter();
-        context.registerReceiver(usbConnectionMonitor, filter);
-
         usbConnectionMonitor.scanUsbDevices(context);
     }
 
+
+
     private Reader createReader(Context context) throws Exception {
+//            tryUpdateStatus(READER_CONNECTING);
+//        canOperateWithExeption(READER_CONNECTING);
         synchronized (this) {
-            tryUpdateStatus(READER_CONNECTING);
             if (!androidUsbReflectionSetted) {
                 ReaderUtils.setupUsbManagerWithFtdi(context, usbDevice);
                 androidUsbReflectionSetted = true;
             }
+
             Reader reader = ReaderUtils.create(usbDevice);
             setListenerToReader(reader);
             return reader;
@@ -360,21 +411,25 @@ public final class ReaderHelper implements IReaderHelper {
     }
 
     private int connectToReader(Reader reader) throws Exception {
-        canOperateWithExeption(READER_CONNECTED);
         reader.connect();
-        setReader(reader);
-        tryUpdateStatus(READER_CONNECTED);
+        setConnectedReader(reader);
         return READER_CONNECTED;
     }
 
     private int configureConnectedReader(Reader reader, ReaderConfigurator configurator) throws Exception {
-        synchronized (this) {
-            canOperateWithExeption(READER_CONFIGURED);
-            configurator.configure(reader);
-            setReader(reader);
-//            tryUpdateStatus(READER_CONFIGURED);
-            return READER_CONFIGURED;
+//        synchronized (this) {
+//            canOperateWithExeption(READER_CONFIGURED);
+        if (null == reader) {
+            throw new Exception("No Reader passed");
+        } else if (null == configurator) {
+            throw new Exception("No ReaderConfigurator passed");
         }
+
+        configurator.configure(reader);
+        setConnectedReader(reader);
+//            tryUpdateStatus(READER_CONFIGURED);
+        return READER_CONFIGURED;
+//        }
     }
 
     private Exception generateErrorForChangeStatusNotPermitted(int newStatusRequest) {
@@ -403,21 +458,22 @@ public final class ReaderHelper implements IReaderHelper {
     }
 
     private void setStatus(int status) {
+//        synchronized (this) {
+        this.currentStatus = status;
+        updateStatusListener(status);
+//        }
+    }
+
+    private void setConnectedReader(Reader reader) {
         synchronized (this) {
-            this.currentStatus = status;
-            updateStatusListener(status);
+            this.connectedReader = reader;
         }
     }
 
-    private void setReader(Reader reader) {
+    @Nullable
+    private Reader getConnectedReader() {
         synchronized (this) {
-            this.reader = reader;
-        }
-    }
-
-    private Reader getReader() {
-        synchronized (this) {
-            return this.reader;
+            return this.connectedReader;
         }
     }
 
@@ -427,13 +483,21 @@ public final class ReaderHelper implements IReaderHelper {
         }
     }
 
-    private void tryUpdateStatus(int newStatusProposed) throws Exception {
+    private boolean tryUpdateStatus(int newStatusProposed) {
+        try {
+            tryUpdateStatusException(newStatusProposed);
+            return true;
+        } catch (Exception e) {
+            updatetErrorListener(e);
+            return false;
+        }
+    }
+
+    private void tryUpdateStatusException(int newStatusProposed) throws Exception {
         if (canOperate(newStatusProposed)) {
             setStatus(newStatusProposed);
         } else {
-            Exception exception = generateErrorForChangeStatusNotPermitted(newStatusProposed);
-//            updatetErrorListener(exception);
-            throw exception;
+            throw generateErrorForChangeStatusNotPermitted(newStatusProposed);
         }
     }
 
@@ -450,12 +514,12 @@ public final class ReaderHelper implements IReaderHelper {
     }
 
     private void updateReaderListener(TagReadData tagReadData) {
-        if (null != readerListener) {
+        if (null != readerListener && canOperate(READING)) {
             readerListener.onRead(tagReadData);
         }
     }
 
-    private void generateInternalListner() {
+    private void generateInternalListener() {
         myReaderListener = new ReadListener() {
             @Override
             public void tagRead(Reader reader, TagReadData tagReadData) {
@@ -471,12 +535,9 @@ public final class ReaderHelper implements IReaderHelper {
     }
 
     private void setListenerToReader(Reader reader) {
-        synchronized (reader) {
-            reader.addReadListener(myReaderListener);
-            reader.addReadExceptionListener(myErrorListener);
-        }
+        reader.addReadListener(myReaderListener);
+        reader.addReadExceptionListener(myErrorListener);
     }
-
 
     private static abstract class AsyncTasks<E> extends AsyncTask<E,Integer,Exception> {
         protected ReaderHelper bind;
@@ -512,12 +573,11 @@ public final class ReaderHelper implements IReaderHelper {
             super.onProgressUpdate(values);
             int status = values[0];
             try {
-                bind.tryUpdateStatus(status);
+                bind.tryUpdateStatusException(status);
             } catch (Exception e) {
                 bind.updatetErrorListener(e);
             }
         }
-
     }
 
     private static class AsyncConfigReaderTask extends AsyncTasks<Context> {
@@ -529,7 +589,8 @@ public final class ReaderHelper implements IReaderHelper {
 
         public AsyncConfigReaderTask(ReaderHelper bind) {
             super(bind);
-            connectorService = Executors.newSingleThreadExecutor();
+//            connectorService = Executors.newSingleThreadExecutor();
+            timeout = 2500L;
         }
 
         @Override
@@ -569,27 +630,28 @@ public final class ReaderHelper implements IReaderHelper {
             Exception err = null;
             Reader connectedReader = null;
             final Context context = contexts[0];
+
             try {
 
-                if (null == configurator) {
-                    throw new Exception("Configurator pass are Null");
+                connectedReader = bind.getConnectedReader();
+                if (null != connectedReader) {
+                    publishProgress(READER_CONNECTED);
+                } else {
+                    connectorService = Executors.newSingleThreadExecutor();
+                    future = connectorService.submit(new Callable<Reader>() {
+                        @Override
+                        public Reader call() throws Exception {
+                            bind.canOperateWithExeption(READER_CONNECTING);
+                            publishProgress(READER_CONNECTING);
+                            Reader reader = bind.createReader(context);
+                            int stat = bind.connectToReader(reader);
+                            publishProgress(stat);
+                            return reader;
+                        }
+                    });
+
+                    connectedReader = future.get(timeout, TimeUnit.MILLISECONDS);
                 }
-
-//                if (null == contexts || 1 > contexts.length) {
-//                    throw new Exception("Contexts pass are Null");
-//                }
-
-                future = connectorService.submit(new Callable<Reader>() {
-                    @Override
-                    public Reader call() throws Exception {
-                        Reader reader = bind.createReader(context);
-                        bind.connectToReader(reader);
-                        return reader;
-                    }
-                });
-
-                connectedReader = future.get(timeout,TimeUnit.MILLISECONDS);
-
                 int stat = bind.configureConnectedReader(connectedReader, configurator);
                 publishProgress(stat);
 
@@ -601,11 +663,15 @@ public final class ReaderHelper implements IReaderHelper {
                 err = e;
             } catch (TimeoutException e) {
                 err = new Exception("Rfid reader may not be attached to USB");
-                publishProgress(USB_DEVICE_ATTACHED_NOT_AUTHORIZED);
+//                publishProgress(USB_DEVICE_ATTACHED_NOT_AUTHORIZED);
             } catch (Exception e) {
                 err = e;
+//                bind.setConnectedReader(null);
+//                publishProgress(INITIALIZED);
             }
-
+            if (null != err) {
+                bind.disconnect(context);
+            }
             return err;
         }
 
@@ -629,7 +695,7 @@ public final class ReaderHelper implements IReaderHelper {
             try {
                 reader.startReading();
                 publishProgress(READING);
-                while (locker.getPayload()) {
+                while (null != locker && locker.getPayload()) {
                     locker.lock(150L);
                 }
                 reader.stopReading();
@@ -649,8 +715,10 @@ public final class ReaderHelper implements IReaderHelper {
         }
 
         public void stopReading() {
-            locker.setPayload(false);
-            locker.unlockAll();
+            if (null != locker) {
+                locker.setPayload(false);
+                locker.unlockAll();
+            }
         }
     }
 }

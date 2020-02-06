@@ -17,6 +17,9 @@ import com.thingmagic.ReaderException;
 import com.thingmagic.SimpleReadPlan;
 import com.thingmagic.TMConstants;
 import com.thingmagic.TagProtocol;
+import com.thingmagic.TagReadData;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 import it.agevoluzione.tools.android.usbconnectorhelper.UsbUtils;
 
@@ -95,6 +98,32 @@ public class ReaderUtils {
             connectedReader.paramSet(TMConstants.TMR_PARAM_REGION_ID, region);
         }
     }
+
+
+
+//    public static class FilterTag {
+//
+//        private ConcurrentHashMap<String,TagReadData> epcToReadDataMap;
+//
+//        public TagReadData readTag(TagReadData readData) {
+//            String key = readData.epcString();
+//            TagReadData toPut = epcToReadDataMap.put(key, readData);
+//            if (null == toPut){
+//                return readData;
+//            }
+//            return null;
+//        }
+//        public void clear() {
+//            epcToReadDataMap.clear();
+//        }
+//
+//        public void getList() {
+//            for (TagReadData value : epcToReadDataMap.values()) {
+//
+//            }
+//
+//        }
+//    }
 
     public static void close(Reader reader) {
         if (null != reader) {
