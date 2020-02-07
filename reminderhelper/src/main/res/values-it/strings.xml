@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">reminderHelper</string>
+
+    <string name="preference_notification_enable_summary">Abilita le notifiche</string>
+    <string name="preference_notification_enable_title">Abilita le notifiche</string>
+
+    <string name="preference_notification_sound_summary">Abilita l\' audio</string>
+    <string name="preference_notification_sound_title">Abilita l\' audio delle notifiche</string>
+
+    <string name="preference_notification_vibrate_summary">Abilita la vibrazione</string>
+    <string name="preference_notification_vibrate_title">Abilita la vibrazione delle notifiche</string>
+
+    <string name="preference_notification_show_in_wake_summary">Riattiva il dispositivo se va in risparmio energetico</string>
+    <string name="preference_notification_show_in_wake_title">Risveglia il dispositivo</string>
+
+    <string name="preference_notification_override_volume_summary">Ignora le impostazioni di sitema e alza il volume al massimo</string>
+    <string name="preference_notification_override_volume_title">Max Volume</string>
+
+</resources>

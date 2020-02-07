@@ -1,2 +1,2 @@
-include ':demoapp', ':tools', ':rfidreaderhelper', ':usbconnectorhelper'
+include ':demoapp', ':tools', ':rfidreaderhelper', ':usbconnectorhelper', ':reminderhelper'
 rootProject.name='Android Rfid Reader Helper Demo'

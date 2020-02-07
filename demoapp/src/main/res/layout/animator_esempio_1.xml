@@ -38,7 +38,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/esempio1_ragio_group_1"
         />
 
     <RadioGroup
@@ -50,10 +49,17 @@
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintTop_toBottomOf="@id/esempio1_title_1"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/esempio1_textview_1"
+        app:layout_constraintBottom_toTopOf="@id/esempio1_ragio_group_2"
         app:layout_constraintRight_toRightOf="parent"
         >
+        <RadioButton
+            android:id="@+id/radio_0"
+            android:text="trasparent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </RadioButton>
+
         <RadioButton
             android:id="@+id/radio_1"
             android:text="black"
@@ -80,6 +86,58 @@
         </RadioButton>
         <RadioButton
             android:id="@+id/radio_5"
+            android:text="red"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </RadioButton>
+
+    </RadioGroup>
+
+    <RadioGroup
+        android:id="@+id/esempio1_ragio_group_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/esempio1_ragio_group_1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/esempio1_textview_1"
+        app:layout_constraintRight_toRightOf="parent"
+        >
+        <RadioButton
+            android:id="@+id/radio_0_2"
+            android:text="original"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </RadioButton>
+        <RadioButton
+            android:id="@+id/radio_1_2"
+            android:text="black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </RadioButton>
+        <RadioButton
+            android:id="@+id/radio_2_2"
+            android:text="white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </RadioButton>
+        <RadioButton
+            android:id="@+id/radio_3_2"
+            android:text="yellow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </RadioButton>
+        <RadioButton
+            android:id="@+id/radio_4_2"
+            android:text="blue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </RadioButton>
+        <RadioButton
+            android:id="@+id/radio_5_2"
             android:text="red"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">

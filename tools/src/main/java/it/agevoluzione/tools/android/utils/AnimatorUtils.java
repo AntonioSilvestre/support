@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -112,15 +111,15 @@ public final class AnimatorUtils {
 
     public static Animator changeTextColor(final TextView view, final int endColor) {
 
-        int initColor = view.getTextColors().getDefaultColor();
+        int initColor = view.getCurrentTextColor();
         ValueAnimator anim = ValueAnimator.ofObject(new ArgbEvaluator(), initColor, endColor);
-        ValueAnimator.AnimatorUpdateListener list = new ValueAnimator.AnimatorUpdateListener() {
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 int val = (int) animation.getAnimatedValue();
                 view.setTextColor(val);
             }
-        };
+        });
 
         anim.addListener(new ShortenAnimatorListner() {
             @Override
@@ -131,59 +130,95 @@ public final class AnimatorUtils {
         return  anim;
     }
 
+//        final ColorStateList colorStateListBegin = view.getTextColors();
+//        final int color = colorStateListBegin.getDefaultColor();
+//////                int alpha = (color >> 24) & 0xff; // or color >>> 24
+//////                int red = (color >> 16) & 0xff;
+//////                int green = (color >>  8) & 0xff;
+//////                int blue = (color      ) & 0xff;
+//        final int alpha = Color.alpha(color); // or color >>> 24
+//        final int red = Color.red(color);
+//        final int green = Color.green(color);
+//        final int blue = Color.blue(color);
+
+
     public static Animator changeText(final TextView view, final String newString) {
 
-        boolean haveText = null == view.getText() || view.getText().toString().isEmpty();
+        final boolean haveStart = !(null == view.getText() || view.getText().toString().isEmpty());
+        boolean haveEnd = !(null == newString || newString.isEmpty());
+//        final int beginColor = haveStart ? view.getCurrentTextColor() : view.getTextColors().getDefaultColor();
+        final int originalColor =  view.getCurrentTextColor();
+        final int originalAlpha = Color.alpha(originalColor);
+        final int alphaToReach = Math.round(originalAlpha / 7f);
+        final String newText = haveEnd ? newString : "";
 
-        ValueAnimator fadeOut;
-        ValueAnimator fadeIn;
-        if (haveText) {
-            fadeOut = ValueAnimator.ofFloat(1, 0.5f);
-            fadeIn = ValueAnimator.ofFloat(0.5f,1);
-        } else {
-            fadeIn = ValueAnimator.ofFloat(0,1);
-            fadeOut = null;
-        }
-        final ColorStateList colorStateListBegin = view.getTextColors();
-        final int color = colorStateListBegin.getDefaultColor();
-////                int alpha = (color >> 24) & 0xff; // or color >>> 24
-////                int red = (color >> 16) & 0xff;
-////                int green = (color >>  8) & 0xff;
-////                int blue = (color      ) & 0xff;
-        final int alpha = Color.alpha(color); // or color >>> 24
-        final int red = Color.red(color);
-        final int green = Color.green(color);
-        final int blue = Color.blue(color);
-
-
-        ValueAnimator.AnimatorUpdateListener animList = new ValueAnimator.AnimatorUpdateListener() {
+        ValueAnimator fadeOut = ValueAnimator.ofInt(originalAlpha, alphaToReach);
+        fadeOut.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                float val = (float) animation.getAnimatedValue();
-//                int val = (int) animation.getAnimatedValue();
-                int newAlpha = Math.round(alpha * val);
-                view.setTextColor(colorStateListBegin.withAlpha(newAlpha));
+                int val = (int) animation.getAnimatedValue();
+                view.setTextColor(view.getTextColors().withAlpha(val));
             }
-        };
+        });
+
+        fadeOut.addListener(new ShortenAnimatorListner() {
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                super.onAnimationCancel(animation);
+                view.setText(newText);
+                view.setTextColor(originalColor);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                view.setText(newText);
+                view.setTextColor(originalColor);
+            }
+        });
+
+
+        ValueAnimator fadeIn = ValueAnimator.ofInt(alphaToReach, originalAlpha);
+        fadeIn.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int val = (int) animation.getAnimatedValue();
+                view.setTextColor(view.getTextColors().withAlpha(val));
+            }
+        });
 
         fadeIn.addListener(new ShortenAnimatorListner() {
             @Override
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
-                view.setText(newString);
+                view.setText(newText);
+                view.setTextColor(view.getTextColors().withAlpha(alphaToReach));
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                super.onAnimationCancel(animation);
+                view.setTextColor(originalColor);
+                view.setText(newText);
             }
         });
 
-        if (null == fadeOut) {
-            fadeIn.addUpdateListener(animList);
-            return fadeIn;
+        AnimatorSet anim = new AnimatorSet();
+        anim.setDuration(300);
+
+        if (haveStart) {
+            if (haveEnd) {
+                anim.play(fadeOut).before(fadeIn);
+            } else {
+                anim.play(fadeOut);
+            }
         } else {
-            fadeOut.addUpdateListener(animList);
-            AnimatorSet anim = new AnimatorSet();
-            anim.play(fadeOut).before(fadeIn);
-            anim.setDuration(300);
-            return anim;
+            if (haveEnd) {
+                anim.play(fadeIn);
+            }
         }
+
+        return anim;
     }
 
     public static Animator changeBackgroudColor(final View view, final int endColor) {
@@ -218,4 +253,28 @@ public final class AnimatorUtils {
         return  anim;
     }
 
+
+    /*
+      public static Animator changeText(final TextView view, final String newString) {
+        boolean haveText = null == view.getText() || view.getText().toString().isEmpty();
+
+        final ColorStateList colorStateListBegin = view.getTextColors();
+//        int originalColor = colorStateListBegin.getDefaultColor();
+        int originalColor = view.getCurrentTextColor();
+        int alpha = Color.alpha(originalColor);
+        int red = Color.red(originalColor);
+        int green = Color.green(originalColor);
+        int blue = Color.blue(originalColor);
+        final int fadedColor = Color.argb(haveText ? Math.round(alpha / 2f) : 0,red,green,blue);
+
+
+        ValueAnimator animfadedColor = ValueAnimator.ofInt(alpha,0);
+        animfadedColor.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int val = (Integer)animation.getAnimatedValue();
+                view.setTextColor(view.getTextColors().withAlpha(val));
+            }
+        });
+     */
 }

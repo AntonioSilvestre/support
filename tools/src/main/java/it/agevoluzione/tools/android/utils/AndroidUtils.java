@@ -128,7 +128,7 @@ public final class AndroidUtils {
                     PowerManager.ACQUIRE_CAUSES_WAKEUP
 //                    PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.PARTIAL_WAKE_LOCK
 //                    PowerManager.PARTIAL_WAKE_LOCK
-                    , "it.agevoluzione.utils.reminder.utils:AndroidUtils");
+                    , "it.agevoluzione.tools.android.utils:AndroidUtils");
             wl.acquire(timeout);
         }
     }
@@ -142,7 +142,7 @@ public final class AndroidUtils {
                     PowerManager.ACQUIRE_CAUSES_WAKEUP
 //                    PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.PARTIAL_WAKE_LOCK
 //                    PowerManager.PARTIAL_WAKE_LOCK
-                    , "it.agevoluzione.utils.reminder.utils:AndroidUtils");
+                    , "it.agevoluzione.tools.android.utils:AndroidUtils");
             wl.release();
         }
     }

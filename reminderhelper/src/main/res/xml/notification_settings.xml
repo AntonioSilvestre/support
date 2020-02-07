@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <androidx.preference.PreferenceCategory
+        app:title="Notifications">
+
+        <androidx.preference.SwitchPreferenceCompat
+            app:key="enable"
+            app:summary="@string/preference_notification_enable_summary"
+            app:title="@string/preference_notification_enable_title"
+            app:defaultValue="true"
+            />
+
+        <androidx.preference.SwitchPreferenceCompat
+            app:key="sound"
+            app:summary="@string/preference_notification_sound_summary"
+            app:title="@string/preference_notification_sound_title"
+            app:defaultValue="true"
+            />
+
+        <androidx.preference.SwitchPreferenceCompat
+            app:key="vibrate"
+            app:summary="@string/preference_notification_vibrate_summary"
+            app:title="@string/preference_notification_vibrate_title"
+            app:defaultValue="true"
+            />
+
+        <androidx.preference.SwitchPreferenceCompat
+            app:key="show_in_wake"
+            app:summary="@string/preference_notification_show_in_wake_summary"
+            app:title="@string/preference_notification_show_in_wake_title"
+            app:defaultValue="true"
+            />
+
+        <androidx.preference.SwitchPreferenceCompat
+            app:key="override_volume"
+            app:summary="@string/preference_notification_override_volume_summary"
+            app:title="@string/preference_notification_override_volume_title"
+            app:defaultValue="true"
+            />
+
+    </androidx.preference.PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>
