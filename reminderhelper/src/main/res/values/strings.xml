@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">reminderHelper</string>
+
+    <string name="preference_notification_enable_summary">Enable Notification</string>
+    <string name="preference_notification_enable_title">Enable Notification</string>
+
+    <string name="preference_notification_sound_summary">Enable notification sound</string>
+    <string name="preference_notification_sound_title">Enable sound</string>
+
+    <string name="preference_notification_vibrate_summary">Enable notification vibration</string>
+    <string name="preference_notification_vibrate_title">"Enable vibration</string>
+
+    <string name="preference_notification_show_in_wake_summary">Show fullActivity in lock screen</string>
+    <string name="preference_notification_show_in_wake_title">WakeUp device</string>
+
+    <string name="preference_notification_override_volume_summary">It does not take into account the volume of the current device and sets it to maximum values</string>
+    <string name="preference_notification_override_volume_title">Override volume</string>
+
+</resources>
